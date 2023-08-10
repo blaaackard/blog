@@ -2,44 +2,44 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://blaaackard.github.io/brog/docs/</loc>
+    <loc>https://blaaackard.github.io/blog/docs/</loc>
     <lastmod>2023-08-11T00:11:59+09:00</lastmod>
   </url><url>
-    <loc>https://blaaackard.github.io/brog/docs/categories/</loc>
+    <loc>https://blaaackard.github.io/blog/docs/categories/</loc>
     <lastmod>2023-08-11T00:11:59+09:00</lastmod>
   </url><url>
-    <loc>https://blaaackard.github.io/brog/docs/post/</loc>
+    <loc>https://blaaackard.github.io/blog/docs/post/</loc>
     <lastmod>2023-08-11T00:11:59+09:00</lastmod>
   </url><url>
-    <loc>https://blaaackard.github.io/brog/docs/tags/</loc>
+    <loc>https://blaaackard.github.io/blog/docs/tags/</loc>
     <lastmod>2023-08-11T00:11:59+09:00</lastmod>
   </url><url>
-    <loc>https://blaaackard.github.io/brog/docs/categories/test-category/</loc>
+    <loc>https://blaaackard.github.io/blog/docs/categories/test-category/</loc>
     <lastmod>2023-08-11T00:11:59+09:00</lastmod>
   </url><url>
-    <loc>https://blaaackard.github.io/brog/docs/tags/test-tag/</loc>
+    <loc>https://blaaackard.github.io/blog/docs/tags/test-tag/</loc>
     <lastmod>2023-08-11T00:11:59+09:00</lastmod>
   </url><url>
-    <loc>https://blaaackard.github.io/brog/docs/p/%E5%88%9D%E6%8A%95%E7%A8%BF/</loc>
+    <loc>https://blaaackard.github.io/blog/docs/p/%E5%88%9D%E6%8A%95%E7%A8%BF/</loc>
     <lastmod>2023-08-11T00:11:59+09:00</lastmod>
   </url><url>
-    <loc>https://blaaackard.github.io/brog/docs/archives/</loc>
+    <loc>https://blaaackard.github.io/blog/docs/archives/</loc>
     <lastmod>2022-03-06T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://blaaackard.github.io/brog/docs/categories/example-category/</loc>
+    <loc>https://blaaackard.github.io/blog/docs/categories/example-category/</loc>
     <lastmod>2022-03-06T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://blaaackard.github.io/brog/docs/tags/example-tag/</loc>
+    <loc>https://blaaackard.github.io/blog/docs/tags/example-tag/</loc>
     <lastmod>2022-03-06T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://blaaackard.github.io/brog/docs/p/hello-world/</loc>
+    <loc>https://blaaackard.github.io/blog/docs/p/hello-world/</loc>
     <lastmod>2022-03-06T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://blaaackard.github.io/brog/docs/page/</loc>
+    <loc>https://blaaackard.github.io/blog/docs/page/</loc>
     <lastmod>2022-03-06T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://blaaackard.github.io/brog/docs/links/</loc>
+    <loc>https://blaaackard.github.io/blog/docs/links/</loc>
   </url><url>
-    <loc>https://blaaackard.github.io/brog/docs/search/</loc>
+    <loc>https://blaaackard.github.io/blog/docs/search/</loc>
   </url>
 </urlset>
