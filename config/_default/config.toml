@@ -6,7 +6,7 @@ title = "技術ブログ(仮)"
 publishDir = "docs"
 avatar = "/images/favicon.png"
 emoji = "🦦"
-defaultContentLanguage = "ja"
+defaultContentLanguage = "en"
 
 # Set hasCJKLanguage to true if DefaultContentLanguage is in [zh-cn ja ko]
 # This will make .Summary and .WordCount behave correctly for CJK languages.
