@@ -6,6 +6,7 @@ title = "技術ブログ(仮)"
 publishDir = "docs"
 avatar = "/images/favicon.png"
 emoji = "🦦"
+defaultContentLanguage = "ja"
 
 
 # Theme i18n support
