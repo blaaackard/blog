@@ -1,18 +1,11 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
     <channel>
-<<<<<<< HEAD
         <title>Example Category on ただの技術ブログ</title>
         <link>https://blaaackard.github.io/blog/categories/example-category/</link>
         <description>Recent content in Example Category on ただの技術ブログ</description>
         <generator>Hugo -- gohugo.io</generator>
         <language>ja</language>
-=======
-        <title>Example Category on 技術ブログ(仮)</title>
-        <link>https://blaaackard.github.io/blog/categories/example-category/</link>
-        <description>Recent content in Example Category on 技術ブログ(仮)</description>
-        <generator>Hugo -- gohugo.io</generator>
->>>>>>> 2fe645ee1e508d521c41327528d58c595ca56ef0
         <lastBuildDate>Sun, 06 Mar 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://blaaackard.github.io/blog/categories/example-category/index.xml" rel="self" type="application/rss+xml" /><item>
         <title>Hello World</title>
         <link>https://blaaackard.github.io/blog/p/hello-world/</link>
