@@ -17,7 +17,7 @@ subtitle = "未経験エンジニアの奮闘"
 
 [sidebar.avatar]
 enabled = true
-local = false
+local = true
 src = "img/avatar.png"
 
 [article]
