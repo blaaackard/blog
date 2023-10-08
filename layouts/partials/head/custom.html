@@ -1,0 +1,11 @@
+<!-- Global site tag (gtag.js) - Google Analytics 4-->
+{{ if not .Site.IsServer }}
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ .Site.GoogleAnalytics }}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-6003CC5K8B');
+    </script>
+{{ end }}
