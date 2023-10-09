@@ -1,6 +1,6 @@
 ---
 title: Kubernetes
-description: A description of this category
+description:
 image:
 
 # Badge style
