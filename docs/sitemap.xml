@@ -2,45 +2,45 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
-    <loc>https://blaaackard.github.io/blog/</loc>
+    <loc>https://blaaackard.com/</loc>
     <lastmod>2023-10-07T00:17:43+09:00</lastmod>
   </url><url>
-    <loc>https://blaaackard.github.io/blog/tags/ai/</loc>
+    <loc>https://blaaackard.com/tags/ai/</loc>
     <lastmod>2023-10-07T00:17:43+09:00</lastmod>
   </url><url>
-    <loc>https://blaaackard.github.io/blog/categories/</loc>
+    <loc>https://blaaackard.com/categories/</loc>
     <lastmod>2023-10-07T00:17:43+09:00</lastmod>
   </url><url>
-    <loc>https://blaaackard.github.io/blog/tags/k8sgpt/</loc>
+    <loc>https://blaaackard.com/tags/k8sgpt/</loc>
     <lastmod>2023-10-07T00:17:43+09:00</lastmod>
   </url><url>
-    <loc>https://blaaackard.github.io/blog/p/k8s-gpt/</loc>
+    <loc>https://blaaackard.com/p/k8s-gpt/</loc>
     <lastmod>2023-10-07T00:17:43+09:00</lastmod>
   </url><url>
-    <loc>https://blaaackard.github.io/blog/tags/kubernetes/</loc>
+    <loc>https://blaaackard.com/tags/kubernetes/</loc>
     <lastmod>2023-10-07T00:17:43+09:00</lastmod>
   </url><url>
-    <loc>https://blaaackard.github.io/blog/categories/kubernetes/</loc>
+    <loc>https://blaaackard.com/categories/kubernetes/</loc>
     <lastmod>2023-10-07T00:17:43+09:00</lastmod>
   </url><url>
-    <loc>https://blaaackard.github.io/blog/post/</loc>
+    <loc>https://blaaackard.com/post/</loc>
     <lastmod>2023-10-07T00:17:43+09:00</lastmod>
   </url><url>
-    <loc>https://blaaackard.github.io/blog/tags/</loc>
+    <loc>https://blaaackard.com/tags/</loc>
     <lastmod>2023-10-07T00:17:43+09:00</lastmod>
   </url><url>
-    <loc>https://blaaackard.github.io/blog/archives/</loc>
+    <loc>https://blaaackard.com/archives/</loc>
     <lastmod>2022-03-06T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://blaaackard.github.io/blog/page/</loc>
+    <loc>https://blaaackard.com/page/</loc>
     <lastmod>2022-03-06T00:00:00+00:00</lastmod>
   </url><url>
-    <loc>https://blaaackard.github.io/blog/categories/example-category/</loc>
+    <loc>https://blaaackard.com/categories/example-category/</loc>
   </url><url>
-    <loc>https://blaaackard.github.io/blog/categories/google-cloud/</loc>
+    <loc>https://blaaackard.com/categories/google-cloud/</loc>
   </url><url>
-    <loc>https://blaaackard.github.io/blog/links/</loc>
+    <loc>https://blaaackard.com/links/</loc>
   </url><url>
-    <loc>https://blaaackard.github.io/blog/search/</loc>
+    <loc>https://blaaackard.com/search/</loc>
   </url>
 </urlset>
