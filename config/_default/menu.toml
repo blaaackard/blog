@@ -1,11 +1,11 @@
 # Configure main menu and social menu
-#[[main]]
+[[main]]
 #identifier = "home"
 #name = "Home"
 #url = "/"
-#[main.params]
+[main.params]
 #icon = "home"
-#newtab = true
+newtab = true
 
 [[social]]
 identifier = "twitter"

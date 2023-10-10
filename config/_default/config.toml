@@ -6,6 +6,9 @@ title = "Penta's TechBlog"
 publishDir = "docs"
 canonifyURLs = true
 
+[params]
+favicon = "/img/favicon.ico"
+
 # Theme i18n support
 # Available values: en, fr, id, ja, ko, pt-br, zh-cn, zh-tw, es, de, nl, it, th, el, uk, ar
 DefaultContentLanguage = "ja"
