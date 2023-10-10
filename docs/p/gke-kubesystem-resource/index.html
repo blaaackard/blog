@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="ja" dir="ltr">
+    <head><meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'><meta name='description' content='あまり意識してこなかった kube-system を覗きにいく👁'>
+<title>GKE の kube-system リソースをざっくり理解する</title>
+
+<link rel='canonical' href='https://blaaackard.com/p/gke-kubesystem-resource/'>
+
+<link rel="stylesheet" href="https://blaaackard.com/scss/style.min.20283f2bf7c64b49e43800f217fe7b1a7a3119e863321c52ce0e477d1175e164.css"><meta property='og:title' content='GKE の kube-system リソースをざっくり理解する'>
+<meta property='og:description' content='あまり意識してこなかった kube-system を覗きにいく👁'>
+<meta property='og:url' content='https://blaaackard.com/p/gke-kubesystem-resource/'>
+<meta property='og:site_name' content='Penta&#39;s TechBlog'>
+<meta property='og:type' content='article'><meta property='article:section' content='Post' /><meta property='article:tag' content='Kubernetes' /><meta property='article:tag' content='Google Cloud' /><meta property='article:tag' content='GKE' /><meta property='article:published_time' content='2023-10-08T15:38:34&#43;09:00'/><meta property='article:modified_time' content='2023-10-08T15:38:34&#43;09:00'/><meta property='og:image' content='https://blaaackard.com/p/gke-kubesystem-resource/cover.png' />
+<meta name="twitter:title" content="GKE の kube-system リソースをざっくり理解する">
+<meta name="twitter:description" content="あまり意識してこなかった kube-system を覗きにいく👁"><meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content='https://blaaackard.com/p/gke-kubesystem-resource/cover.png' />
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id="></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-6003CC5K8B');
+    </script>
+
+    </head>
+    <body class="
+    article-page
+    ">
+    <script>
+        (function() {
+            const colorSchemeKey = 'StackColorScheme';
+            if(!localStorage.getItem(colorSchemeKey)){
+                localStorage.setItem(colorSchemeKey, "auto");
+            }
+        })();
+    </script><script>
+    (function() {
+        const colorSchemeKey = 'StackColorScheme';
+        const colorSchemeItem = localStorage.getItem(colorSchemeKey);
+        const supportDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches === true;
+
+        if (colorSchemeItem == 'dark' || colorSchemeItem === 'auto' && supportDarkMode) {
+            
+
+            document.documentElement.dataset.scheme = 'dark';
+        } else {
+            document.documentElement.dataset.scheme = 'light';
+        }
+    })();
+</script>
+<div class="container main-container flex on-phone--column extended"><aside class="sidebar left-sidebar sticky ">
+    <button class="hamburger hamburger--spin" type="button" id="toggle-menu" aria-label="メニューを開く・閉じる">
+        <span class="hamburger-box">
+            <span class="hamburger-inner"></span>
+        </span>
+    </button>
+
+    <header>
+        
+            
+            <figure class="site-avatar">
+                <a href="https://blaaackard.com/">
+                
+                    
+                    
+                    
+                        
+                        <img src="https://blaaackard.com/img/avatar_hud9397d267f3637cdf0b671d3c0947f4d_2718_300x0_resize_box_3.png" width="300"
+                            height="414" class="site-logo" loading="lazy" alt="Avatar">
+                    
+                
+                </a>
+                
+                    <span class="emoji">🦦</span>
+                
+            </figure>
+            
+        
+        
+        <div class="site-meta">
+            <h1 class="site-name"><a href="https://blaaackard.com/">Penta&#39;s TechBlog</a></h1>
+            <h2 class="site-description"></h2>
+        </div>
+    </header><ol class="social-menu">
+            
+                <li>
+                    <a 
+                        href='https://twitter.com/BlaaacKard'
+                        target="_blank"
+                        title="Twitter"
+                        rel="me"
+                    >
+                        
+                        
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-brand-twitter" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+  <path d="M22 4.01c-1 .49 -1.98 .689 -3 .99c-1.121 -1.265 -2.783 -1.335 -4.38 -.737s-2.643 2.06 -2.62 3.737v1c-3.245 .083 -6.135 -1.395 -8 -4c0 0 -4.182 7.433 4 11c-1.872 1.247 -3.739 2.088 -6 2c3.308 1.803 6.913 2.423 10.034 1.517c3.58 -1.04 6.522 -3.723 7.651 -7.742a13.84 13.84 0 0 0 .497 -3.753c-.002 -.249 1.51 -2.772 1.818 -4.013z" />
+</svg>
+
+
+
+                        
+                    </a>
+                </li>
+            
+        </ol><ol class="menu" id="main-menu">
+        
+        
+        
+        <li >
+            <a href='https://blaaackard.com/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-home" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <polyline points="5 12 3 12 12 3 21 12 19 12" />
+  <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+  <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+</svg>
+
+
+
+                
+                <span>Home</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='https://blaaackard.com/archives/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-archive" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <rect x="3" y="4" width="18" height="4" rx="2" />
+  <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+  <line x1="10" y1="12" x2="14" y2="12" />
+</svg>
+
+
+
+                
+                <span>Archives</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='https://blaaackard.com/search/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-search" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="10" cy="10" r="7" />
+  <line x1="21" y1="21" x2="15" y2="15" />
+</svg>
+
+
+
+                
+                <span>Search</span>
+            </a>
+        </li>
+        
+        
+        <li >
+            <a href='https://blaaackard.com/links/' >
+                
+                
+                
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-link" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+  <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+</svg>
+
+
+
+                
+                <span>Links</span>
+            </a>
+        </li>
+        
+
+        <div class="menu-bottom-section">
+            
+            
+                <li id="dark-mode-toggle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-left" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="8" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-toggle-right" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="16" cy="12" r="2" />
+  <rect x="2" y="6" width="20" height="12" rx="6" />
+</svg>
+
+
+
+                    <span>ダークモード</span>
+                </li>
+            
+        </div>
+    </ol>
+</aside>
+
+    <aside class="sidebar right-sidebar sticky">
+        
+            
+                
+    <section class="widget archives">
+        <div class="widget-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-hash" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <line x1="5" y1="9" x2="19" y2="9" />
+  <line x1="5" y1="15" x2="19" y2="15" />
+  <line x1="11" y1="4" x2="7" y2="20" />
+  <line x1="17" y1="4" x2="13" y2="20" />
+</svg>
+
+
+
+        </div>
+        <h2 class="widget-title section-title">目次</h2>
+        
+        <div class="widget--toc">
+            <nav id="TableOfContents">
+  <ol>
+    <li><a href="#deployment">Deployment</a>
+      <ol>
+        <li><a href="#event-exporter-gke">event-exporter-gke</a></li>
+        <li><a href="#konnectivity-agent">konnectivity-agent</a></li>
+        <li><a href="#kube-dns">kube-dns</a></li>
+        <li><a href="#l7-default-backend">l7-default-backend</a></li>
+        <li><a href="#metrics-server">metrics-server</a></li>
+      </ol>
+    </li>
+    <li><a href="#daemonset">Daemonset</a>
+      <ol>
+        <li><a href="#fluentbit-gke">fluentbit-gke</a></li>
+        <li><a href="#gke-metrics-agent">gke-metrics-agent</a></li>
+        <li><a href="#kube-proxy">kube-proxy</a></li>
+        <li><a href="#metadata-proxy">metadata-proxy</a></li>
+        <li><a href="#nccl-fastsocket-installer">nccl-fastsocket-installer</a></li>
+        <li><a href="#nvidia-gpu-device-plugin">nvidia-gpu-device-plugin</a></li>
+        <li><a href="#pdcsi-node">pdcsi-node</a></li>
+        <li><a href="#runsc-metric-server">runsc-metric-server</a></li>
+        <li><a href="#tpu-device-plugin">tpu-device-plugin</a></li>
+      </ol>
+    </li>
+  </ol>
+</nav>
+        </div>
+    </section>
+
+            
+        
+    </aside>
+
+
+            <main class="main full-width">
+    <article class="has-image main-article">
+    <header class="article-header">
+        <div class="article-image">
+            <a href="https://blaaackard.com/p/gke-kubesystem-resource/">
+                <img src="https://blaaackard.com/p/gke-kubesystem-resource/cover_hu55a857987ee61949054669d80844a31c_2738055_800x0_resize_box_3.png"
+                        srcset="https://blaaackard.com/p/gke-kubesystem-resource/cover_hu55a857987ee61949054669d80844a31c_2738055_800x0_resize_box_3.png 800w, https://blaaackard.com/p/gke-kubesystem-resource/cover_hu55a857987ee61949054669d80844a31c_2738055_1600x0_resize_box_3.png 1600w"
+                        width="800" 
+                        height="450" 
+                        loading="lazy"
+                        alt="Featured image of post GKE の kube-system リソースをざっくり理解する" />
+                
+            </a>
+        </div>
+    
+
+    <div class="article-details">
+    
+    <header class="article-category">
+        
+            <a href="https://blaaackard.com/categories/kubernetes/" style="background-color: #00a1e9; color: #fff;">
+                Kubernetes
+            </a>
+        
+            <a href="https://blaaackard.com/categories/google-cloud/" >
+                Google Cloud
+            </a>
+        
+    </header>
+    
+
+    <div class="article-title-wrapper">
+        <h2 class="article-title">
+            <a href="https://blaaackard.com/p/gke-kubesystem-resource/">GKE の kube-system リソースをざっくり理解する</a>
+        </h2>
+    
+        
+        <h3 class="article-subtitle">
+            あまり意識してこなかった kube-system を覗きにいく👁
+        </h3>
+        
+    </div>
+
+    
+    
+    
+    
+    <footer class="article-time">
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar-time" width="56" height="56" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" />
+  <circle cx="18" cy="18" r="4" />
+  <path d="M15 3v4" />
+  <path d="M7 3v4" />
+  <path d="M3 11h16" />
+  <path d="M18 16.496v1.504l1 1" />
+</svg>
+                <time class="article-time--published">Oct 08, 2023</time>
+            </div>
+        
+
+        
+            <div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-clock" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <polyline points="12 7 12 12 15 15" />
+</svg>
+
+
+
+                <time class="article-time--reading">
+                    読了時間: 9分
+                </time>
+            </div>
+        
+    </footer>
+    
+
+    
+</div>
+
+</header>
+
+    <section class="article-content">
+    
+    
+    <h1 id="最初に">最初に</h1>
+<p>Kubernetes初心者の私は特にNamespace「<strong>kube-system</strong>」にあるリソースについて意識せずに業務を進めていました。<br>
+そこで今回はGKE(Google Cloud Kubernetes Engine)でクラスタ構築時に勝手に作成されるリソースがどのような働きをしているのか雑にまとめてみることにしました。</p>
+<p>まずはクラスタを構築して、、、  特に何もデプロイせずに<code>k get all</code>をします。</p>
+<details>
+<summary>実行結果</summary>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">❯ k get all -n kube-system
+</span></span><span class="line"><span class="cl">NAME                                                              READY   STATUS    RESTARTS   AGE
+</span></span><span class="line"><span class="cl">pod/event-exporter-gke-7bf6c99dcb-ddh8w                           2/2     Running   <span class="m">0</span>          3m14s
+</span></span><span class="line"><span class="cl">pod/fluentbit-gke-sdpcc                                           2/2     Running   <span class="m">0</span>          2m14s
+</span></span><span class="line"><span class="cl">pod/gke-metrics-agent-mztgr                                       2/2     Running   <span class="m">0</span>          2m14s
+</span></span><span class="line"><span class="cl">pod/konnectivity-agent-69fc69d588-t67rj                           1/1     Running   <span class="m">0</span>          3m3s
+</span></span><span class="line"><span class="cl">pod/konnectivity-agent-autoscaler-5d9dbcc6d8-2qlgw                1/1     Running   <span class="m">0</span>          3m2s
+</span></span><span class="line"><span class="cl">pod/kube-dns-5bfd847c64-p6tgx                                     4/4     Running   <span class="m">0</span>          3m22s
+</span></span><span class="line"><span class="cl">pod/kube-dns-autoscaler-84b8db4dc7-2sjtc                          1/1     Running   <span class="m">0</span>          3m21s
+</span></span><span class="line"><span class="cl">pod/kube-proxy-gke-cn-matsuirut-temp-default-pool-14ae721e-qj9s   1/1     Running   <span class="m">0</span>          72s
+</span></span><span class="line"><span class="cl">pod/l7-default-backend-d86c96845-nj87m                            1/1     Running   <span class="m">0</span>          3m
+</span></span><span class="line"><span class="cl">pod/metrics-server-v0.5.2-6bf74b5d5f-wvrqq                        2/2     Running   <span class="m">0</span>          91s
+</span></span><span class="line"><span class="cl">pod/pdcsi-node-pvztw                                              2/2     Running   <span class="m">0</span>          2m14s
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">NAME                           TYPE        CLUSTER-IP      EXTERNAL-IP   PORT<span class="o">(</span>S<span class="o">)</span>         AGE
+</span></span><span class="line"><span class="cl">service/default-http-backend   NodePort    10.248.14.194   &lt;none&gt;        80:30274/TCP    2m59s
+</span></span><span class="line"><span class="cl">service/kube-dns               ClusterIP   10.248.0.10     &lt;none&gt;        53/UDP,53/TCP   3m23s
+</span></span><span class="line"><span class="cl">service/metrics-server         ClusterIP   10.248.8.65     &lt;none&gt;        443/TCP         2m50s
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">NAME                                                    DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR                                                        AGE
+</span></span><span class="line"><span class="cl">daemonset.apps/fluentbit-gke                            <span class="m">1</span>         <span class="m">1</span>         <span class="m">1</span>       <span class="m">1</span>            <span class="m">1</span>           kubernetes.io/os<span class="o">=</span>linux                                               3m12s
+</span></span><span class="line"><span class="cl">daemonset.apps/fluentbit-gke-256pd                      <span class="m">0</span>         <span class="m">0</span>         <span class="m">0</span>       <span class="m">0</span>            <span class="m">0</span>           kubernetes.io/os<span class="o">=</span>linux                                               3m12s
+</span></span><span class="line"><span class="cl">daemonset.apps/fluentbit-gke-max                        <span class="m">0</span>         <span class="m">0</span>         <span class="m">0</span>       <span class="m">0</span>            <span class="m">0</span>           kubernetes.io/os<span class="o">=</span>linux                                               3m12s
+</span></span><span class="line"><span class="cl">daemonset.apps/gke-metrics-agent                        <span class="m">1</span>         <span class="m">1</span>         <span class="m">1</span>       <span class="m">1</span>            <span class="m">1</span>           &lt;none&gt;                                                               3m8s
+</span></span><span class="line"><span class="cl">daemonset.apps/gke-metrics-agent-scaling-10             <span class="m">0</span>         <span class="m">0</span>         <span class="m">0</span>       <span class="m">0</span>            <span class="m">0</span>           &lt;none&gt;                                                               3m8s
+</span></span><span class="line"><span class="cl">daemonset.apps/gke-metrics-agent-scaling-100            <span class="m">0</span>         <span class="m">0</span>         <span class="m">0</span>       <span class="m">0</span>            <span class="m">0</span>           &lt;none&gt;                                                               3m7s
+</span></span><span class="line"><span class="cl">daemonset.apps/gke-metrics-agent-scaling-20             <span class="m">0</span>         <span class="m">0</span>         <span class="m">0</span>       <span class="m">0</span>            <span class="m">0</span>           &lt;none&gt;                                                               3m7s
+</span></span><span class="line"><span class="cl">daemonset.apps/gke-metrics-agent-scaling-200            <span class="m">0</span>         <span class="m">0</span>         <span class="m">0</span>       <span class="m">0</span>            <span class="m">0</span>           &lt;none&gt;                                                               3m7s
+</span></span><span class="line"><span class="cl">daemonset.apps/gke-metrics-agent-scaling-50             <span class="m">0</span>         <span class="m">0</span>         <span class="m">0</span>       <span class="m">0</span>            <span class="m">0</span>           &lt;none&gt;                                                               3m7s
+</span></span><span class="line"><span class="cl">daemonset.apps/gke-metrics-agent-scaling-500            <span class="m">0</span>         <span class="m">0</span>         <span class="m">0</span>       <span class="m">0</span>            <span class="m">0</span>           &lt;none&gt;                                                               3m6s
+</span></span><span class="line"><span class="cl">daemonset.apps/gke-metrics-agent-windows                <span class="m">0</span>         <span class="m">0</span>         <span class="m">0</span>       <span class="m">0</span>            <span class="m">0</span>           kubernetes.io/os<span class="o">=</span>windows                                             3m6s
+</span></span><span class="line"><span class="cl">daemonset.apps/kube-proxy                               <span class="m">0</span>         <span class="m">0</span>         <span class="m">0</span>       <span class="m">0</span>            <span class="m">0</span>           kubernetes.io/os<span class="o">=</span>linux,node.kubernetes.io/kube-proxy-ds-ready<span class="o">=</span><span class="nb">true</span>   2m38s
+</span></span><span class="line"><span class="cl">daemonset.apps/metadata-proxy-v0.1                      <span class="m">0</span>         <span class="m">0</span>         <span class="m">0</span>       <span class="m">0</span>            <span class="m">0</span>           cloud.google.com/metadata-proxy-ready<span class="o">=</span>true,kubernetes.io/os<span class="o">=</span>linux    2m35s
+</span></span><span class="line"><span class="cl">daemonset.apps/nccl-fastsocket-installer                <span class="m">0</span>         <span class="m">0</span>         <span class="m">0</span>       <span class="m">0</span>            <span class="m">0</span>           &lt;none&gt;                                                               2m49s
+</span></span><span class="line"><span class="cl">daemonset.apps/nvidia-gpu-device-plugin-large-cos       <span class="m">0</span>         <span class="m">0</span>         <span class="m">0</span>       <span class="m">0</span>            <span class="m">0</span>           &lt;none&gt;                                                               3m5s
+</span></span><span class="line"><span class="cl">daemonset.apps/nvidia-gpu-device-plugin-large-ubuntu    <span class="m">0</span>         <span class="m">0</span>         <span class="m">0</span>       <span class="m">0</span>            <span class="m">0</span>           &lt;none&gt;                                                               3m4s
+</span></span><span class="line"><span class="cl">daemonset.apps/nvidia-gpu-device-plugin-medium-cos      <span class="m">0</span>         <span class="m">0</span>         <span class="m">0</span>       <span class="m">0</span>            <span class="m">0</span>           &lt;none&gt;                                                               3m6s
+</span></span><span class="line"><span class="cl">daemonset.apps/nvidia-gpu-device-plugin-medium-ubuntu   <span class="m">0</span>         <span class="m">0</span>         <span class="m">0</span>       <span class="m">0</span>            <span class="m">0</span>           &lt;none&gt;                                                               3m5s
+</span></span><span class="line"><span class="cl">daemonset.apps/nvidia-gpu-device-plugin-small-cos       <span class="m">0</span>         <span class="m">0</span>         <span class="m">0</span>       <span class="m">0</span>            <span class="m">0</span>           &lt;none&gt;                                                               3m6s
+</span></span><span class="line"><span class="cl">daemonset.apps/nvidia-gpu-device-plugin-small-ubuntu    <span class="m">0</span>         <span class="m">0</span>         <span class="m">0</span>       <span class="m">0</span>            <span class="m">0</span>           &lt;none&gt;                                                               3m5s
+</span></span><span class="line"><span class="cl">daemonset.apps/pdcsi-node                               <span class="m">1</span>         <span class="m">1</span>         <span class="m">1</span>       <span class="m">1</span>            <span class="m">1</span>           kubernetes.io/os<span class="o">=</span>linux                                               2m46s
+</span></span><span class="line"><span class="cl">daemonset.apps/pdcsi-node-windows                       <span class="m">0</span>         <span class="m">0</span>         <span class="m">0</span>       <span class="m">0</span>            <span class="m">0</span>           kubernetes.io/os<span class="o">=</span>windows                                             2m45s
+</span></span><span class="line"><span class="cl">daemonset.apps/runsc-metric-server                      <span class="m">0</span>         <span class="m">0</span>         <span class="m">0</span>       <span class="m">0</span>            <span class="m">0</span>           kubernetes.io/os<span class="o">=</span>linux,sandbox.gke.io/runtime<span class="o">=</span>gvisor                 3m20s
+</span></span><span class="line"><span class="cl">daemonset.apps/tpu-device-plugin                        <span class="m">0</span>         <span class="m">0</span>         <span class="m">0</span>       <span class="m">0</span>            <span class="m">0</span>           &lt;none&gt;                                                               2m41s
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">NAME                                            READY   UP-TO-DATE   AVAILABLE   AGE
+</span></span><span class="line"><span class="cl">deployment.apps/event-exporter-gke              1/1     <span class="m">1</span>            <span class="m">1</span>           3m15s
+</span></span><span class="line"><span class="cl">deployment.apps/konnectivity-agent              1/1     <span class="m">1</span>            <span class="m">1</span>           3m4s
+</span></span><span class="line"><span class="cl">deployment.apps/konnectivity-agent-autoscaler   1/1     <span class="m">1</span>            <span class="m">1</span>           3m3s
+</span></span><span class="line"><span class="cl">deployment.apps/kube-dns                        1/1     <span class="m">1</span>            <span class="m">1</span>           3m24s
+</span></span><span class="line"><span class="cl">deployment.apps/kube-dns-autoscaler             1/1     <span class="m">1</span>            <span class="m">1</span>           3m22s
+</span></span><span class="line"><span class="cl">deployment.apps/l7-default-backend              1/1     <span class="m">1</span>            <span class="m">1</span>           3m1s
+</span></span><span class="line"><span class="cl">deployment.apps/metrics-server-v0.5.2           1/1     <span class="m">1</span>            <span class="m">1</span>           2m50s
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">NAME                                                       DESIRED   CURRENT   READY   AGE
+</span></span><span class="line"><span class="cl">replicaset.apps/event-exporter-gke-7bf6c99dcb              <span class="m">1</span>         <span class="m">1</span>         <span class="m">1</span>       3m15s
+</span></span><span class="line"><span class="cl">replicaset.apps/konnectivity-agent-69fc69d588              <span class="m">1</span>         <span class="m">1</span>         <span class="m">1</span>       3m4s
+</span></span><span class="line"><span class="cl">replicaset.apps/konnectivity-agent-autoscaler-5d9dbcc6d8   <span class="m">1</span>         <span class="m">1</span>         <span class="m">1</span>       3m3s
+</span></span><span class="line"><span class="cl">replicaset.apps/kube-dns-5bfd847c64                        <span class="m">1</span>         <span class="m">1</span>         <span class="m">1</span>       3m23s
+</span></span><span class="line"><span class="cl">replicaset.apps/kube-dns-autoscaler-84b8db4dc7             <span class="m">1</span>         <span class="m">1</span>         <span class="m">1</span>       3m22s
+</span></span><span class="line"><span class="cl">replicaset.apps/l7-default-backend-d86c96845               <span class="m">1</span>         <span class="m">1</span>         <span class="m">1</span>       3m1s
+</span></span><span class="line"><span class="cl">replicaset.apps/metrics-server-v0.5.2-6bf74b5d5f           <span class="m">1</span>         <span class="m">1</span>         <span class="m">1</span>       92s
+</span></span><span class="line"><span class="cl">replicaset.apps/metrics-server-v0.5.2-8569bc4cf9           <span class="m">0</span>         <span class="m">0</span>         <span class="m">0</span>       2m50s
+</span></span></code></pre></td></tr></table>
+</div>
+</div></details>
+<p>沢山ありますね、一つずつメモレベルでまとめていこうかと思います。<br>
+情報間違っていたらすみません。</p>
+<h2 id="deployment">Deployment</h2>
+<h3 id="event-exporter-gke">event-exporter-gke</h3>
+<p>✅ <strong>Cluster で発生した Event をキャプチャし Cloud Logging に送信する</strong></p>
+<p>Kubetenes Cluster内部で実際に発生したEventは<code>kubectl get event</code>で取得可能。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">❯ kubectl get event
+</span></span><span class="line"><span class="cl">LAST SEEN   TYPE      REASON             OBJECT               MESSAGE
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">55s         Normal    ScalingReplicaSet  deployment/kube-dns  Scaled down replica <span class="nb">set</span> kube-dns-5bfd847c64 to <span class="m">1</span> from <span class="m">2</span>
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>しかし、これらのEvent情報は発生から1時間後に削除されてしまう。Cluster内部の異常に気づき、後から調査しようと思ったときにはEventのログが消えていた、となると大変だ。<br>
+そこで<strong>event-exporter-gke</strong>の登場。Event情報をLoggingに送信することで後からでもEvent情報を見ることができ、何よりコンソールから容易に検索が可能となる。</p>
+<p><img src="https://blaaackard.com/p/gke-kubesystem-resource/logging.png"
+	width="1177"
+	height="514"
+	srcset="https://blaaackard.com/p/gke-kubesystem-resource/logging_hu105c321fc49abb2bc50ed5c88a48ee4b_108766_480x0_resize_box_3.png 480w, https://blaaackard.com/p/gke-kubesystem-resource/logging_hu105c321fc49abb2bc50ed5c88a48ee4b_108766_1024x0_resize_box_3.png 1024w"
+	loading="lazy"
+	
+		alt="Loggingコンソール画面"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="228"
+		data-flex-basis="549px"
+	
+></p>
+<p>🚨公式docによるとevent-exporterはベストエフォート方式で動作するため、すべてのEventをキャプチャできるとは限らないらしい。トラブルシューティングの際は、Eventに加えてLogsとMetricsを使用することが推奨されている。</p>
+<p>参考:<br>
+<a class="link" href="https://cloud.google.com/stackdriver/docs/solutions/gke/managing-logs?hl=ja"  target="_blank" rel="noopener"
+    >https://cloud.google.com/stackdriver/docs/solutions/gke/managing-logs?hl=ja</a></p>
+<h3 id="konnectivity-agent">konnectivity-agent</h3>
+<p>✅ <strong>コントロールプレーンからクラスタへの通信を安全に</strong></p>
+<p><strong>Konnectivity</strong> はコントロールプレーンからクラスタへの通信に TCP プロキシを提供するサービスで、コントロールプレーン側に配置された Konnectivity Serverと、クラスタ側に 配置されたKonnectivity Agentの２つの役割から構成されている。<br>
+Konnectivity 登場以前、コントロールプレーンからクラスタ内部への通信には、セキュリティの懸念があるプレーンHTTPや現在非推奨となっているSSHトンネルが利用されていたそう。Konnectivity登場後、<strong>Kubernetes API Server がクラスタ内部に直接接続することがなくなった</strong>ことで、ネットワーキングの分離が可能になり、トラフィックを分割して管理できたりセキュリティの強化ができるようになった。</p>
+<p><strong>konnectivity-agent-autoscaler</strong> は、上記の Konnectivity Agent のスケーリングを制御するものだと認識。</p>
+<p>参考:<br>
+<a class="link" href="https://polar3130.hatenablog.com/entry/2023/05/26/173000"  target="_blank" rel="noopener"
+    >https://polar3130.hatenablog.com/entry/2023/05/26/173000</a><br>
+(参考というかほぼ引用させていただきました)<br>
+<a class="link" href="https://kubernetes.io/docs/concepts/architecture/control-plane-node-communication/#konnectivity-service"  target="_blank" rel="noopener"
+    >https://kubernetes.io/docs/concepts/architecture/control-plane-node-communication/#konnectivity-service</a></p>
+<h3 id="kube-dns">kube-dns</h3>
+<p>✅ <strong>GKE クラスタに内蔵されている DNS サーバ</strong></p>
+<p><strong>kube-dns</strong> は、クラスタ内のコンテナが名前解決できるようDNSの設定を行うクラスタ内のDNSサーバで、Serviceとして動いている。<br>
+アーキテクチャ図は以下。kube-dns Service は、kube-dns Pod をグループ化して、単一の IP アドレス（ClusterIP）を割り振る役割を持っており、デフォルトではクラスタ内のすべての Pod がこの Service を使用して DNS クエリを解決する。<br>
+<strong>kube-dns-autoscaler</strong> は、クラスタの DNS 処理に対応できるように kube-dns をスケーリングする役割を持っている。</p>
+<p><img src="https://blaaackard.com/p/gke-kubesystem-resource/kube-dns.png"
+	width="729"
+	height="332"
+	srcset="https://blaaackard.com/p/gke-kubesystem-resource/kube-dns_hu8c08fd8b2185451f1583140fee73e427_17040_480x0_resize_box_3.png 480w, https://blaaackard.com/p/gke-kubesystem-resource/kube-dns_hu8c08fd8b2185451f1583140fee73e427_17040_1024x0_resize_box_3.png 1024w"
+	loading="lazy"
+	
+		alt="アーキテクチャ(公式docから引用)"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="219"
+		data-flex-basis="526px"
+	
+></p>
+<p>各 Pod の DNS 設定は <strong>kubelet</strong> が行っており、kube-dns Service の IPアドレスは各コンテナ内の<code>etc/resolv.conf</code>に記述されている。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">❯ k get service kube-dns
+</span></span><span class="line"><span class="cl">NAME       TYPE        CLUSTER-IP   EXTERNAL-IP   PORT<span class="o">(</span>S<span class="o">)</span>         AGE
+</span></span><span class="line"><span class="cl">kube-dns   ClusterIP   10.8.0.10    &lt;none&gt;        53/UDP,53/TCP   9h
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>nameserver に kube-dns の CLUSTER-IPである<code>10.8.0.10</code>が書いてある。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-fallback" data-lang="fallback"><span class="line"><span class="cl"># cat /etc/resolv.conf
+</span></span><span class="line"><span class="cl">search k8sgpt.svc.cluster.local svc.cluster.local cluster.local asia-northeast1-a.c.{hoge}.internal c.{hoge}.internal google.internal
+</span></span><span class="line"><span class="cl">nameserver 10.8.0.10
+</span></span><span class="line"><span class="cl">options ndots:5
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>参考:<br>
+<a class="link" href="https://kubernetes.io/ja/docs/concepts/services-networking/dns-pod-service/"  target="_blank" rel="noopener"
+    >https://kubernetes.io/ja/docs/concepts/services-networking/dns-pod-service/</a><br>
+<a class="link" href="https://cloud.google.com/kubernetes-engine/docs/how-to/kube-dns?hl=ja"  target="_blank" rel="noopener"
+    >https://cloud.google.com/kubernetes-engine/docs/how-to/kube-dns?hl=ja</a><br>
+<a class="link" href="https://gadgeterkun.hatenablog.com/entry/20190630/1561864860"  target="_blank" rel="noopener"
+    >https://gadgeterkun.hatenablog.com/entry/20190630/1561864860</a><br>
+<a class="link" href="https://amateur-engineer-blog.com/kubernetes-dns/"  target="_blank" rel="noopener"
+    >https://amateur-engineer-blog.com/kubernetes-dns/</a></p>
+<h3 id="l7-default-backend">l7-default-backend</h3>
+<p>✅ <strong>Ingress Controller のこと</strong></p>
+<p>GKE では、Ingress というオブジェクトで、アプリケーションに HTTP(S) トラフィックをルーティングすることができる。
+GKE Ingress Controller によって Cloud HTTP(S) ロードバランサが作成され、Ingress および関連する Service の情報に従って構成を行う。この Ingress Controller の Pod が  <strong>l7-default-backend</strong> で、GKEクラスタの HTTP ロードバランシングが「有効」になっていると起動する。<br>
+この Ingress Controller が NEG(Network Endpoint Groups:<code>GCE_VM_IP_PORT</code>)を作成することで、コンテナに対して直接負荷分散を行うことが可能となり、従来にくらべてコンテナに到達するまでのホップ数を減らし、レイテンシーの向上が期待できる「コンテナネイティブの負荷分散」ができるようになる。</p>
+<p><img src="https://blaaackard.com/p/gke-kubesystem-resource/lb-neg.png"
+	width="1438"
+	height="678"
+	srcset="https://blaaackard.com/p/gke-kubesystem-resource/lb-neg_huc078f036485567769935fe3250a4d861_94919_480x0_resize_box_3.png 480w, https://blaaackard.com/p/gke-kubesystem-resource/lb-neg_huc078f036485567769935fe3250a4d861_94919_1024x0_resize_box_3.png 1024w"
+	loading="lazy"
+	
+		alt="公式docから引用"
+	
+	
+		class="gallery-image" 
+		data-flex-grow="212"
+		data-flex-basis="509px"
+	
+></p>
+<p>どんどん話が大きくなりそうなので一旦ここまで。</p>
+<p>参考:<br>
+<a class="link" href="https://cloud.google.com/kubernetes-engine/docs/concepts/ingress?hl=ja"  target="_blank" rel="noopener"
+    >https://cloud.google.com/kubernetes-engine/docs/concepts/ingress?hl=ja</a><br>
+<a class="link" href="https://cloud.google.com/kubernetes-engine/docs/concepts/container-native-load-balancing?hl=ja"  target="_blank" rel="noopener"
+    >https://cloud.google.com/kubernetes-engine/docs/concepts/container-native-load-balancing?hl=ja</a><br>
+<a class="link" href="https://qiita.com/ishii1648/items/a9804d96dea275ee28bd"  target="_blank" rel="noopener"
+    >https://qiita.com/ishii1648/items/a9804d96dea275ee28bd</a></p>
+<h3 id="metrics-server">metrics-server</h3>
+<p>✅ <strong>クラスタのリソースを取得する</strong></p>
+<p><strong>Metrics Server</strong> は Kubelet からクラスタ内のリソース使用状況を収集し、Metrics API を通じて Kubernetes Api Server で公開する。リソース使用状況を収集することで、自動スケーリングやデバッグが容易になる。</p>
+<p>Metrics API には <code>kubectl top</code>でアクセス可能。<br>
+<code>kubectl describe</code>コマンドでは Pod が確保したリソースを確認できるのに対し、こちらのコマンドは<strong>実際に Pod 内のコンテナが使用しているリソースの使用量</strong>が確認できる。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span><span class="lnt">4
+</span><span class="lnt">5
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">❯ kubectl top pod -n kube-system
+</span></span><span class="line"><span class="cl">NAME                                                          CPU<span class="o">(</span>cores<span class="o">)</span>   MEMORY<span class="o">(</span>bytes<span class="o">)</span>
+</span></span><span class="line"><span class="cl">event-exporter-gke-7bf6c99dcb-ddh8w                           1m           20Mi
+</span></span><span class="line"><span class="cl">fluentbit-gke-sdpcc                                           6m           23Mi
+</span></span><span class="line"><span class="cl">...
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>参考:<br>
+<a class="link" href="https://github.com/kubernetes-sigs/metrics-server"  target="_blank" rel="noopener"
+    >https://github.com/kubernetes-sigs/metrics-server</a><br>
+<a target="_blank" href="https://www.amazon.co.jp/Kubernetes%25E5%25AE%258C%25E5%2585%25A8%25E3%2582%25AC%25E3%2582%25A4%25E3%2583%2589-%25E7%25AC%25AC2%25E7%2589%2588-Top-Gear-%25E9%259D%2592%25E5%25B1%25B1/dp/4295009792?&_encoding=UTF8&tag=blaaackard04-22&linkCode=ur2&linkId=2ff724fb2dfe8348672a1ebc4673ed32&camp=247&creative=1211">Kubernetes完全ガイド 第2版 (Top Gear)</a></p>
+<h2 id="daemonset">Daemonset</h2>
+<p>全ての Node で動くべき Pod を定義するのが Daemonset 。<br>
+監視やログ収集を行うデーモン等があります。軽く触れていきます。</p>
+<h3 id="fluentbit-gke">fluentbit-gke</h3>
+<p>✅ <strong>各 Node のコンテナログを Cloud Logging に転送する</strong></p>
+<p>GKE クラスタを作成すると、Cloud Logging および Cloud Monitoring と Cloud Operations for GKE とのインテグレーションがデフォルトで有効になる。<br>
+システムログとアプリケーション ログは、Cloud Logging のログルーターに配信され、Cloud Logging に取り込まれるか、除外されるか、BigQuery、Pub/Sub、Cloud Storage 等にエクスポートされる。<br>
+システム ロギングを有効にすると、fluentbit ベースの専用の Logging エージェントである <strong>fluentbit-gke</strong> が 各ノードに自動的にデプロイされ、ログを Cloud Logging に送信する。</p>
+<p>GKE Standard における Node あたりの Pod 数上限は 110  だったが、2022 年 8 月のアップデートで 256 まで引き上げられた。 <strong>fluentbit-gke-256pd</strong> はそれに対応するものという認識。<br>
+いずれかの GKE ノードで 1 秒あたり 100 KiB を超えるログ スループットが必要な場合は、高スループット版の <strong>fluentbit-gke-max</strong> を使用することで、ノードごとに 1 秒あたり 10 MiB という高スループットを実現することができる。</p>
+<p>参考:<br>
+<a class="link" href="https://cloud.google.com/stackdriver/docs/solutions/gke/managing-logs?hl=ja"  target="_blank" rel="noopener"
+    >https://cloud.google.com/stackdriver/docs/solutions/gke/managing-logs?hl=ja</a><br>
+<a class="link" href="https://polar3130.hatenablog.com/entry/2022/08/18/180500"  target="_blank" rel="noopener"
+    >https://polar3130.hatenablog.com/entry/2022/08/18/180500</a><br>
+<a class="link" href="https://polar3130.hatenablog.com/entry/2022/09/21/090000"  target="_blank" rel="noopener"
+    >https://polar3130.hatenablog.com/entry/2022/09/21/090000</a></p>
+<h3 id="gke-metrics-agent">gke-metrics-agent</h3>
+<p>✅ <strong>Cloud Monitoring にメトリクスを送信する</strong></p>
+<p>Cloud Monitoring にメトリクスを取り込むことで、ダッシュボードでの表示やアラートの生成を行うことができる。<strong>gke-metrics-agent</strong> は各ノードのメトリクスを Cloud Monitoring に送信する役割を持つ。<br>
+gke-metrics-agent-scaling-10 や gke-metrics-agent-scaling-100 があるが、数字は追加するメモリ量(MB)を表している。</p>
+<p>参考:<br>
+<a class="link" href="https://cloud.google.com/stackdriver/docs/solutions/gke/managing-metrics?hl=ja"  target="_blank" rel="noopener"
+    >https://cloud.google.com/stackdriver/docs/solutions/gke/managing-metrics?hl=ja</a></p>
+<h3 id="kube-proxy">kube-proxy</h3>
+<p>✅ <strong>Service リソースを監視し、ノードのネットワーク設定を行う</strong></p>
+<p><strong>kube-proxy</strong> は kubelet と同じく、各Node上で動作するコンポーネント。Service リソースの作成/更新/削除を検知した際に、Node のネットワーク設定を行うことで、 ClusterIP や NodePort 宛のトラフィックが Pod に正常に転送されるようにする。<br>
+3つの転送方式があるが、デフォルトは iptables を構成する iptables モード。<br>
+以下参考ページがわかりやすい。</p>
+<p>参考:
+<a class="link" href="https://qiita.com/nozmiz/items/9a74433258a79be26c36"  target="_blank" rel="noopener"
+    >https://qiita.com/nozmiz/items/9a74433258a79be26c36</a><br>
+<a class="link" href="https://recruit.gmo.jp/engineer/jisedai/blog/kubernetes_service/"  target="_blank" rel="noopener"
+    >https://recruit.gmo.jp/engineer/jisedai/blog/kubernetes_service/</a></p>
+<h3 id="metadata-proxy">metadata-proxy</h3>
+<p>✅ <strong>コンテナワークロードに隠蔽されたメタデータを提供する</strong></p>
+<p>GKE ではインスタンスメタデータを使用して VM を構成するが、メタデータの一部は機密性が高くクラスタで実行中のワークロードから保護する必要がある。<br>
+<strong>metadata-proxy</strong>はこの役割を持つものだが、現在ではメタデータ隠蔽は非推奨となっており、<strong>Workload Identity</strong> を使うことが推奨されている。</p>
+<p>参考:<br>
+<a class="link" href="https://cloud.google.com/kubernetes-engine/docs/how-to/protecting-cluster-metadata?hl=ja"  target="_blank" rel="noopener"
+    >https://cloud.google.com/kubernetes-engine/docs/how-to/protecting-cluster-metadata?hl=ja</a><br>
+<a class="link" href="https://github.com/GoogleCloudPlatform/k8s-metadata-proxy"  target="_blank" rel="noopener"
+    >https://github.com/GoogleCloudPlatform/k8s-metadata-proxy</a></p>
+<h3 id="nccl-fastsocket-installer">nccl-fastsocket-installer</h3>
+<p>✅ <strong>NVIDIAが提供するマルチGPU向けの集合通信のパフォーマンスを向上させる</strong></p>
+<p>NCCLは、NVIDIAが提供するマルチGPU向けの集合通信用のライブラリで、TensorFlow や PyTorch などのディープラーニングフレームワークでマルチ GPU やマルチノードトレーニングを行う場合に使用される。<br>
+<strong>nccl-fastsocket-installer</strong> は、これらのパフォーマンスを向上させるトランスポート層のプラグインらしい。</p>
+<p>参考:<br>
+<a class="link" href="https://github.com/google/nccl-fastsocket"  target="_blank" rel="noopener"
+    >https://github.com/google/nccl-fastsocket</a>
+<a class="link" href="https://cloud.google.com/compute/docs/gpus/optimize-gpus?hl=ja#fast-socket"  target="_blank" rel="noopener"
+    >https://cloud.google.com/compute/docs/gpus/optimize-gpus?hl=ja#fast-socket</a></p>
+<h3 id="nvidia-gpu-device-plugin">nvidia-gpu-device-plugin</h3>
+<p>✅ <strong>NVIDIA製のGPUをクラスタで使えるようにする</strong></p>
+<p>Device Plugins とは様々なハードウェアを kubelet に見せるための仕組み。<br>
+GKE上では、NVIDIA Tesla® GPU（K80、P100、P4、V100、T4、L4、A100）を装備したノードプールを作成することができ、画像認識や自然言語処理等のディープラーニングに必要な計算能力を提供する。
+<strong>nvidia-gpu-device-plugin</strong> はGKE上で NVIDIA 製の GPU を実行するために必要な plugin 。</p>
+<p>参考:<br>
+<a class="link" href="https://cloud.google.com/kubernetes-engine/docs/how-to/gpus?hl=ja"  target="_blank" rel="noopener"
+    >https://cloud.google.com/kubernetes-engine/docs/how-to/gpus?hl=ja</a><br>
+<a class="link" href="https://speakerdeck.com/extendwings/device-pluginkai-fa-ru-men"  target="_blank" rel="noopener"
+    >https://speakerdeck.com/extendwings/device-pluginkai-fa-ru-men</a><br>
+<a class="link" href="https://kubernetes.io/ja/docs/tasks/manage-gpus/scheduling-gpus/"  target="_blank" rel="noopener"
+    >https://kubernetes.io/ja/docs/tasks/manage-gpus/scheduling-gpus/</a></p>
+<h3 id="pdcsi-node">pdcsi-node</h3>
+<p>✅ <strong>Compute Engine 永続ディスクの CSI ドライバ</strong></p>
+<p>GKE を使用するとクラスタへ簡単かつ自動的に Compute Engine 永続ディスク Container Storage Interface（CSI）ドライバをデプロイして管理することができる。標準クラスタでは、Compute Engine 永続ディスクの CSI ドライバを有効にする必要がある。</p>
+<p>詳しく調べてないが、<code>csi-node-driver-registrar</code>と<code>gcp-compute-persistent-disk-csi-driver</code>という Image が使われていることから、これらに関連するリソースだと思われる。</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre tabindex="0" class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="cl">❯ kubectl describe daemonsets pdcsi-node --namespace<span class="o">=</span>kube-system
+</span></span><span class="line"><span class="cl">...
+</span></span><span class="line"><span class="cl">Pod Template:
+</span></span><span class="line"><span class="cl">  Labels:           k8s-app<span class="o">=</span>gcp-compute-persistent-disk-csi-driver
+</span></span><span class="line"><span class="cl">  Annotations:      components.gke.io/component-name: pdcsi
+</span></span><span class="line"><span class="cl">                    components.gke.io/component-version: 0.16.14
+</span></span><span class="line"><span class="cl">  Service Account:  pdcsi-node-sa
+</span></span><span class="line"><span class="cl">  Containers:
+</span></span><span class="line"><span class="cl">   csi-driver-registrar:
+</span></span><span class="line"><span class="cl">    Image:      gke.gcr.io/csi-node-driver-registrar:v2.8.0-gke.4@sha256:715a1581ce158fbf95f7ca351e25c7d6a0a1599e46e270e72238cc8a0aef1c43
+</span></span><span class="line"><span class="cl">
+</span></span><span class="line"><span class="cl">   gce-pd-driver:
+</span></span><span class="line"><span class="cl">    Image:      gke.gcr.io/gcp-compute-persistent-disk-csi-driver:v1.10.7-gke.0@sha256:a3e4af6b6f6999427dc7b02e813aa1ca5f26e73357c92a77b8fe774ddf431a26
+</span></span></code></pre></td></tr></table>
+</div>
+</div><p>詳しくは以下の参考ページ。</p>
+<p>参考:<br>
+<a class="link" href="https://cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/gce-pd-csi-driver?hl=ja"  target="_blank" rel="noopener"
+    >https://cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/gce-pd-csi-driver?hl=ja</a><br>
+<a class="link" href="https://github.com/kubernetes-sigs/gcp-compute-persistent-disk-csi-driver"  target="_blank" rel="noopener"
+    >https://github.com/kubernetes-sigs/gcp-compute-persistent-disk-csi-driver</a></p>
+<h3 id="runsc-metric-server">runsc-metric-server</h3>
+<p>あまり良くわかってないが、以下の参考サイトと関連ありそう。</p>
+<p>参考:<br>
+<a class="link" href="https://gvisor.dev/docs/user_guide/observability/"  target="_blank" rel="noopener"
+    >https://gvisor.dev/docs/user_guide/observability/</a></p>
+<h3 id="tpu-device-plugin">tpu-device-plugin</h3>
+<p>調べてもあまり情報が出てこなかったが、nvidia-gpu-device-plugin と同様に GKE上で TPU を実行したい場合に必要な plugin だと認識。</p>
+<h1 id="まとめ">まとめ</h1>
+<p>今回は Namespace 「kube-system」 にあるリソースがどのような役割を持っているのかメモベースでまとめてみました。なんとなくの理解がハッキリした理解に変わったり、新しく得た知識もありました。<br>
+まだまだ分からないことだらけですが一つずつ潰していきたいです。<br>
+ありがとうございました。</p>
+
+</section>
+
+
+    <footer class="article-footer">
+    
+    <section class="article-tags">
+        
+            <a href="https://blaaackard.com/tags/kubernetes/">Kubernetes</a>
+        
+            <a href="https://blaaackard.com/tags/google-cloud/">Google Cloud</a>
+        
+            <a href="https://blaaackard.com/tags/gke/">GKE</a>
+        
+    </section>
+
+
+    
+    <section class="article-copyright">
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-copyright" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <path stroke="none" d="M0 0h24v24H0z"/>
+  <circle cx="12" cy="12" r="9" />
+  <path d="M14.5 9a3.5 4 0 1 0 0 6" />
+</svg>
+
+
+
+        <span>Licensed under CC BY-NC-SA 4.0</span>
+    </section>
+    </footer>
+
+
+    
+        <link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.css"integrity="sha256-J&#43;iAE0sgH8QSz9hpcDxXIftnj65JEZgNhGcgReTTK9s="crossorigin="anonymous"
+            ><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/katex.min.js"integrity="sha256-InsNdER1b2xUewP&#43;pKCUJpkhiqwHgqiPXDlIk7GzBu4="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/katex@0.15.6/dist/contrib/auto-render.min.js"integrity="sha256-y39Mpg7V3D4lhBX4x6O0bUqTV4pSrfgwEfGKfxkOdgI="crossorigin="anonymous"
+                defer
+                >
+            </script><script>
+    window.addEventListener("DOMContentLoaded", () => {
+        renderMathInElement(document.querySelector(`.article-content`), {
+            delimiters: [
+                { left: "$$", right: "$$", display: true },
+                { left: "$", right: "$", display: false },
+                { left: "\\(", right: "\\)", display: false },
+                { left: "\\[", right: "\\]", display: true }
+            ],
+            ignoredClasses: ["gist"]
+        });})
+</script>
+    
+</article>
+
+    
+
+    
+
+<aside class="related-content--wrapper">
+    <h2 class="section-title">関連するコンテンツ</h2>
+    <div class="related-content">
+        <div class="flex article-list--tile">
+            
+                
+<article class="has-image">
+    <a href="https://blaaackard.com/p/k8s-gpt/">
+        
+        
+            <div class="article-image">
+                <img src="https://blaaackard.com/p/k8s-gpt/cover.fe6da3c89991d87dc3e8cd29550c6579_hu19669f3980519f16624bf304411b5ba5_1909883_250x150_fill_box_smart1_3.png" 
+                        width="250" 
+                        height="150" 
+                        loading="lazy"
+                        alt="Featured image of post K8sGPTを使ってクラスタのAI分析をしてみよう"
+                        data-key="k8s-gpt" 
+                        data-hash="md5-/m2jyJmR2H3D6M0pVQxleQ==">
+                
+            </div>
+        
+
+        <div class="article-details">
+            <h2 class="article-title">K8sGPTを使ってクラスタのAI分析をしてみよう</h2>
+        </div>
+    </a>
+</article>
+
+            
+        </div>
+    </div>
+</aside>
+
+     
+    
+        
+    
+
+    <footer class="site-footer">
+    <section class="copyright">
+        &copy; 
+        
+            2020 - 
+        
+        2023 Penta&#39;s TechBlog
+    </section>
+    
+    <section class="powerby">
+        Built with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> <br />
+        テーマ <b><a href="https://github.com/CaiJimmy/hugo-theme-stack" target="_blank" rel="noopener" data-version="3.20.0">Stack</a></b> は <a href="https://jimmycai.com" target="_blank" rel="noopener">Jimmy</a> によって設計されています。
+    </section>
+</footer>
+
+
+    
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+
+    
+    <div class="pswp__bg"></div>
+
+    
+    <div class="pswp__scroll-wrap">
+
+        
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+
+        
+        <div class="pswp__ui pswp__ui--hidden">
+
+            <div class="pswp__top-bar">
+
+                
+
+                <div class="pswp__counter"></div>
+
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+
+                
+                
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                        <div class="pswp__preloader__cut">
+                            <div class="pswp__preloader__donut"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div>
+            </div>
+
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.js"integrity="sha256-ePwmChbbvXbsO02lbM3HoHbSHTHFAeChekF1xKJdleo="crossorigin="anonymous"
+                defer
+                >
+            </script><script 
+                src="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe-ui-default.min.js"integrity="sha256-UKkzOn/w1mBxRmLLGrSeyB4e1xbrp4xylgAWb3M42pU="crossorigin="anonymous"
+                defer
+                >
+            </script><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/default-skin/default-skin.min.css"crossorigin="anonymous"
+            ><link 
+                rel="stylesheet" 
+                href="https://cdn.jsdelivr.net/npm/photoswipe@4.1.3/dist/photoswipe.min.css"crossorigin="anonymous"
+            >
+
+            </main>
+        </div>
+        <script 
+                src="https://cdn.jsdelivr.net/npm/node-vibrant@3.1.6/dist/vibrant.min.js"integrity="sha256-awcR2jno4kI5X0zL8ex0vi2z&#43;KMkF24hUW8WePSA9HM="crossorigin="anonymous"
+                
+                >
+            </script><script type="text/javascript" src="https://blaaackard.com/ts/main.js" defer></script>
+<script>
+    (function () {
+        const customFont = document.createElement('link');
+        customFont.href = "https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap";
+
+        customFont.type = "text/css";
+        customFont.rel = "stylesheet";
+
+        document.head.appendChild(customFont);
+    }());
+</script>
+
+    </body>
+</html>

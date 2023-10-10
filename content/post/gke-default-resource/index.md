@@ -8,7 +8,7 @@ math:
 license: 
 hidden: false
 comments: true
-draft: true
+draft: false
 categories:
     - Kubernetes
     - Google Cloud
@@ -244,8 +244,27 @@ https://cloud.google.com/stackdriver/docs/solutions/gke/managing-metrics?hl=ja
 
 ### kube-proxy
 
+✅ **Service リソースを監視し、ノードのネットワーク設定を行う**
+
+**kube-proxy** は kubelet と同じく、各Node上で動作するコンポーネント。Service リソースの作成/更新/削除を検知した際に、Node のネットワーク設定を行うことで、 ClusterIP や NodePort 宛のトラフィックが Pod に正常に転送されるようにする。  
+3つの転送方式があるが、デフォルトは iptables を構成する iptables モード。  
+以下参考ページがわかりやすい。
+
+参考: 
+https://qiita.com/nozmiz/items/9a74433258a79be26c36  
+https://recruit.gmo.jp/engineer/jisedai/blog/kubernetes_service/
+
 
 ### metadata-proxy
+
+✅ **コンテナワークロードに隠蔽されたメタデータを提供する**
+
+GKE ではインスタンスメタデータを使用して VM を構成するが、メタデータの一部は機密性が高くクラスタで実行中のワークロードから保護する必要がある。  
+**metadata-proxy**はこの役割を持つものだが、現在ではメタデータ隠蔽は非推奨となっており、**Workload Identity** を使うことが推奨されている。
+
+参考:  
+https://cloud.google.com/kubernetes-engine/docs/how-to/protecting-cluster-metadata?hl=ja  
+https://github.com/GoogleCloudPlatform/k8s-metadata-proxy  
 
 
 ### nccl-fastsocket-installer
@@ -275,10 +294,47 @@ https://kubernetes.io/ja/docs/tasks/manage-gpus/scheduling-gpus/
 
 ### pdcsi-node
 
+✅ **Compute Engine 永続ディスクの CSI ドライバ**
+
+GKE を使用するとクラスタへ簡単かつ自動的に Compute Engine 永続ディスク Container Storage Interface（CSI）ドライバをデプロイして管理することができる。標準クラスタでは、Compute Engine 永続ディスクの CSI ドライバを有効にする必要がある。  
+
+詳しく調べてないが、`csi-node-driver-registrar`と`gcp-compute-persistent-disk-csi-driver`という Image が使われていることから、これらに関連するリソースだと思われる。
+
+```bash
+❯ kubectl describe daemonsets pdcsi-node --namespace=kube-system
+...
+Pod Template:
+  Labels:           k8s-app=gcp-compute-persistent-disk-csi-driver
+  Annotations:      components.gke.io/component-name: pdcsi
+                    components.gke.io/component-version: 0.16.14
+  Service Account:  pdcsi-node-sa
+  Containers:
+   csi-driver-registrar:
+    Image:      gke.gcr.io/csi-node-driver-registrar:v2.8.0-gke.4@sha256:715a1581ce158fbf95f7ca351e25c7d6a0a1599e46e270e72238cc8a0aef1c43
+
+   gce-pd-driver:
+    Image:      gke.gcr.io/gcp-compute-persistent-disk-csi-driver:v1.10.7-gke.0@sha256:a3e4af6b6f6999427dc7b02e813aa1ca5f26e73357c92a77b8fe774ddf431a26
+```
+
+詳しくは以下の参考ページ。
+
+参考:  
+https://cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/gce-pd-csi-driver?hl=ja  
+https://github.com/kubernetes-sigs/gcp-compute-persistent-disk-csi-driver  
 
 ### runsc-metric-server
 
+あまり良くわかってないが、以下の参考サイトと関連ありそう。
+
+参考:  
+https://gvisor.dev/docs/user_guide/observability/
 
 ### tpu-device-plugin
 
 調べてもあまり情報が出てこなかったが、nvidia-gpu-device-plugin と同様に GKE上で TPU を実行したい場合に必要な plugin だと認識。
+
+# まとめ
+
+今回は Namespace 「kube-system」 にあるリソースがどのような役割を持っているのかメモベースでまとめてみました。なんとなくの理解がハッキリした理解に変わったり、新しく得た知識もありました。  
+まだまだ分からないことだらけですが一つずつ潰していきたいです。  
+ありがとうございました。

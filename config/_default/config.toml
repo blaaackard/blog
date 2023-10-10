@@ -2,7 +2,7 @@
 baseurl = "https://blaaackard.com"
 languageCode = "ja"
 paginate = 5
-title = "ただの技術ブログ"
+title = "Penta's TechBlog"
 publishDir = "docs"
 canonifyURLs = true
 
