@@ -1,0 +1,793 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Kubernetes on Penta's TechBlog</title><link>https://blaaackard.com/tags/kubernetes/</link><description>Recent content in Kubernetes on Penta's TechBlog</description><generator>Hugo -- gohugo.io</generator><language>ja</language><lastBuildDate>Sun, 08 Oct 2023 15:38:34 +0900</lastBuildDate><atom:link href="https://blaaackard.com/tags/kubernetes/index.xml" rel="self" type="application/rss+xml"/><item><title>GKE の kube-system リソースをざっくり理解する</title><link>https://blaaackard.com/p/gke-kubesystem-resource/</link><pubDate>Sun, 08 Oct 2023 15:38:34 +0900</pubDate><guid>https://blaaackard.com/p/gke-kubesystem-resource/</guid><description>&lt;img src="https://blaaackard.com/p/gke-kubesystem-resource/cover.png" alt="Featured image of post GKE の kube-system リソースをざっくり理解する" />&lt;h1 id="最初に">最初に&lt;/h1>
+&lt;p>Kubernetes初心者の私は特にNamespace「&lt;strong>kube-system&lt;/strong>」にあるリソースについて意識せずに業務を進めていました。&lt;br>
+そこで今回はGKE(Google Cloud Kubernetes Engine)でクラスタ構築時に勝手に作成されるリソースがどのような働きをしているのか雑にまとめてみることにしました。&lt;/p>
+&lt;p>まずはクラスタを構築して、、、 特に何もデプロイせずに&lt;code>k get all&lt;/code>をします。&lt;/p>
+&lt;details>
+&lt;summary>実行結果&lt;/summary>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;span class="lnt">27
+&lt;/span>&lt;span class="lnt">28
+&lt;/span>&lt;span class="lnt">29
+&lt;/span>&lt;span class="lnt">30
+&lt;/span>&lt;span class="lnt">31
+&lt;/span>&lt;span class="lnt">32
+&lt;/span>&lt;span class="lnt">33
+&lt;/span>&lt;span class="lnt">34
+&lt;/span>&lt;span class="lnt">35
+&lt;/span>&lt;span class="lnt">36
+&lt;/span>&lt;span class="lnt">37
+&lt;/span>&lt;span class="lnt">38
+&lt;/span>&lt;span class="lnt">39
+&lt;/span>&lt;span class="lnt">40
+&lt;/span>&lt;span class="lnt">41
+&lt;/span>&lt;span class="lnt">42
+&lt;/span>&lt;span class="lnt">43
+&lt;/span>&lt;span class="lnt">44
+&lt;/span>&lt;span class="lnt">45
+&lt;/span>&lt;span class="lnt">46
+&lt;/span>&lt;span class="lnt">47
+&lt;/span>&lt;span class="lnt">48
+&lt;/span>&lt;span class="lnt">49
+&lt;/span>&lt;span class="lnt">50
+&lt;/span>&lt;span class="lnt">51
+&lt;/span>&lt;span class="lnt">52
+&lt;/span>&lt;span class="lnt">53
+&lt;/span>&lt;span class="lnt">54
+&lt;/span>&lt;span class="lnt">55
+&lt;/span>&lt;span class="lnt">56
+&lt;/span>&lt;span class="lnt">57
+&lt;/span>&lt;span class="lnt">58
+&lt;/span>&lt;span class="lnt">59
+&lt;/span>&lt;span class="lnt">60
+&lt;/span>&lt;span class="lnt">61
+&lt;/span>&lt;span class="lnt">62
+&lt;/span>&lt;span class="lnt">63
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">❯ k get all -n kube-system
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">NAME READY STATUS RESTARTS AGE
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">pod/event-exporter-gke-7bf6c99dcb-ddh8w 2/2 Running &lt;span class="m">0&lt;/span> 3m14s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">pod/fluentbit-gke-sdpcc 2/2 Running &lt;span class="m">0&lt;/span> 2m14s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">pod/gke-metrics-agent-mztgr 2/2 Running &lt;span class="m">0&lt;/span> 2m14s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">pod/konnectivity-agent-69fc69d588-t67rj 1/1 Running &lt;span class="m">0&lt;/span> 3m3s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">pod/konnectivity-agent-autoscaler-5d9dbcc6d8-2qlgw 1/1 Running &lt;span class="m">0&lt;/span> 3m2s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">pod/kube-dns-5bfd847c64-p6tgx 4/4 Running &lt;span class="m">0&lt;/span> 3m22s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">pod/kube-dns-autoscaler-84b8db4dc7-2sjtc 1/1 Running &lt;span class="m">0&lt;/span> 3m21s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">pod/kube-proxy-gke-cn-matsuirut-temp-default-pool-14ae721e-qj9s 1/1 Running &lt;span class="m">0&lt;/span> 72s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">pod/l7-default-backend-d86c96845-nj87m 1/1 Running &lt;span class="m">0&lt;/span> 3m
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">pod/metrics-server-v0.5.2-6bf74b5d5f-wvrqq 2/2 Running &lt;span class="m">0&lt;/span> 91s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">pod/pdcsi-node-pvztw 2/2 Running &lt;span class="m">0&lt;/span> 2m14s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">NAME TYPE CLUSTER-IP EXTERNAL-IP PORT&lt;span class="o">(&lt;/span>S&lt;span class="o">)&lt;/span> AGE
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">service/default-http-backend NodePort 10.248.14.194 &amp;lt;none&amp;gt; 80:30274/TCP 2m59s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">service/kube-dns ClusterIP 10.248.0.10 &amp;lt;none&amp;gt; 53/UDP,53/TCP 3m23s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">service/metrics-server ClusterIP 10.248.8.65 &amp;lt;none&amp;gt; 443/TCP 2m50s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">NAME DESIRED CURRENT READY UP-TO-DATE AVAILABLE NODE SELECTOR AGE
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/fluentbit-gke &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> kubernetes.io/os&lt;span class="o">=&lt;/span>linux 3m12s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/fluentbit-gke-256pd &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> kubernetes.io/os&lt;span class="o">=&lt;/span>linux 3m12s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/fluentbit-gke-max &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> kubernetes.io/os&lt;span class="o">=&lt;/span>linux 3m12s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/gke-metrics-agent &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> &amp;lt;none&amp;gt; 3m8s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/gke-metrics-agent-scaling-10 &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &amp;lt;none&amp;gt; 3m8s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/gke-metrics-agent-scaling-100 &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &amp;lt;none&amp;gt; 3m7s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/gke-metrics-agent-scaling-20 &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &amp;lt;none&amp;gt; 3m7s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/gke-metrics-agent-scaling-200 &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &amp;lt;none&amp;gt; 3m7s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/gke-metrics-agent-scaling-50 &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &amp;lt;none&amp;gt; 3m7s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/gke-metrics-agent-scaling-500 &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &amp;lt;none&amp;gt; 3m6s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/gke-metrics-agent-windows &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> kubernetes.io/os&lt;span class="o">=&lt;/span>windows 3m6s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/kube-proxy &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> kubernetes.io/os&lt;span class="o">=&lt;/span>linux,node.kubernetes.io/kube-proxy-ds-ready&lt;span class="o">=&lt;/span>&lt;span class="nb">true&lt;/span> 2m38s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/metadata-proxy-v0.1 &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> cloud.google.com/metadata-proxy-ready&lt;span class="o">=&lt;/span>true,kubernetes.io/os&lt;span class="o">=&lt;/span>linux 2m35s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/nccl-fastsocket-installer &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &amp;lt;none&amp;gt; 2m49s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/nvidia-gpu-device-plugin-large-cos &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &amp;lt;none&amp;gt; 3m5s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/nvidia-gpu-device-plugin-large-ubuntu &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &amp;lt;none&amp;gt; 3m4s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/nvidia-gpu-device-plugin-medium-cos &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &amp;lt;none&amp;gt; 3m6s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/nvidia-gpu-device-plugin-medium-ubuntu &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &amp;lt;none&amp;gt; 3m5s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/nvidia-gpu-device-plugin-small-cos &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &amp;lt;none&amp;gt; 3m6s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/nvidia-gpu-device-plugin-small-ubuntu &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &amp;lt;none&amp;gt; 3m5s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/pdcsi-node &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> kubernetes.io/os&lt;span class="o">=&lt;/span>linux 2m46s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/pdcsi-node-windows &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> kubernetes.io/os&lt;span class="o">=&lt;/span>windows 2m45s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/runsc-metric-server &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> kubernetes.io/os&lt;span class="o">=&lt;/span>linux,sandbox.gke.io/runtime&lt;span class="o">=&lt;/span>gvisor 3m20s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">daemonset.apps/tpu-device-plugin &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &amp;lt;none&amp;gt; 2m41s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">NAME READY UP-TO-DATE AVAILABLE AGE
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">deployment.apps/event-exporter-gke 1/1 &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> 3m15s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">deployment.apps/konnectivity-agent 1/1 &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> 3m4s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">deployment.apps/konnectivity-agent-autoscaler 1/1 &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> 3m3s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">deployment.apps/kube-dns 1/1 &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> 3m24s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">deployment.apps/kube-dns-autoscaler 1/1 &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> 3m22s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">deployment.apps/l7-default-backend 1/1 &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> 3m1s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">deployment.apps/metrics-server-v0.5.2 1/1 &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> 2m50s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">NAME DESIRED CURRENT READY AGE
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">replicaset.apps/event-exporter-gke-7bf6c99dcb &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> 3m15s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">replicaset.apps/konnectivity-agent-69fc69d588 &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> 3m4s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">replicaset.apps/konnectivity-agent-autoscaler-5d9dbcc6d8 &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> 3m3s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">replicaset.apps/kube-dns-5bfd847c64 &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> 3m23s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">replicaset.apps/kube-dns-autoscaler-84b8db4dc7 &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> 3m22s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">replicaset.apps/l7-default-backend-d86c96845 &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> 3m1s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">replicaset.apps/metrics-server-v0.5.2-6bf74b5d5f &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> &lt;span class="m">1&lt;/span> 92s
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">replicaset.apps/metrics-server-v0.5.2-8569bc4cf9 &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> &lt;span class="m">0&lt;/span> 2m50s
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;/details>
+&lt;p>沢山ありますね、一つずつメモレベルでまとめていこうかと思います。&lt;br>
+情報間違っていたらすみません。&lt;/p>
+&lt;h2 id="deployment">Deployment&lt;/h2>
+&lt;h3 id="event-exporter-gke">event-exporter-gke&lt;/h3>
+&lt;p>✅ &lt;strong>Cluster で発生した Event をキャプチャし Cloud Logging に送信する&lt;/strong>&lt;/p>
+&lt;p>Kubetenes Cluster内部で実際に発生したEventは&lt;code>kubectl get event&lt;/code>で取得可能。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">❯ kubectl get event
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">LAST SEEN TYPE REASON OBJECT MESSAGE
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">55s Normal ScalingReplicaSet deployment/kube-dns Scaled down replica &lt;span class="nb">set&lt;/span> kube-dns-5bfd847c64 to &lt;span class="m">1&lt;/span> from &lt;span class="m">2&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>しかし、これらのEvent情報は発生から1時間後に削除されてしまう。Cluster内部の異常に気づき、後から調査しようと思ったときにはEventのログが消えていた、となると大変だ。&lt;br>
+そこで&lt;strong>event-exporter-gke&lt;/strong>の登場。Event情報をLoggingに送信することで後からでもEvent情報を見ることができ、何よりコンソールから容易に検索が可能となる。&lt;/p>
+&lt;p>&lt;img src="https://blaaackard.com/p/gke-kubesystem-resource/logging.png"
+width="1177"
+height="514"
+srcset="https://blaaackard.com/p/gke-kubesystem-resource/logging_hu105c321fc49abb2bc50ed5c88a48ee4b_108766_480x0_resize_box_3.png 480w, https://blaaackard.com/p/gke-kubesystem-resource/logging_hu105c321fc49abb2bc50ed5c88a48ee4b_108766_1024x0_resize_box_3.png 1024w"
+loading="lazy"
+alt="Loggingコンソール画面"
+class="gallery-image"
+data-flex-grow="228"
+data-flex-basis="549px"
+>&lt;/p>
+&lt;p>🚨公式docによるとevent-exporterはベストエフォート方式で動作するため、すべてのEventをキャプチャできるとは限らないらしい。トラブルシューティングの際は、Eventに加えてLogsとMetricsを使用することが推奨されている。&lt;/p>
+&lt;p>参考:&lt;br>
+&lt;a class="link" href="https://cloud.google.com/stackdriver/docs/solutions/gke/managing-logs?hl=ja" target="_blank" rel="noopener"
+>https://cloud.google.com/stackdriver/docs/solutions/gke/managing-logs?hl=ja&lt;/a>&lt;/p>
+&lt;h3 id="konnectivity-agent">konnectivity-agent&lt;/h3>
+&lt;p>✅ &lt;strong>コントロールプレーンからクラスタへの通信を安全に&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>Konnectivity&lt;/strong> はコントロールプレーンからクラスタへの通信に TCP プロキシを提供するサービスで、コントロールプレーン側に配置された Konnectivity Serverと、クラスタ側に 配置されたKonnectivity Agentの２つの役割から構成されている。&lt;br>
+Konnectivity 登場以前、コントロールプレーンからクラスタ内部への通信には、セキュリティの懸念があるプレーンHTTPや現在非推奨となっているSSHトンネルが利用されていたそう。Konnectivity登場後、&lt;strong>Kubernetes API Server がクラスタ内部に直接接続することがなくなった&lt;/strong>ことで、ネットワーキングの分離が可能になり、トラフィックを分割して管理できたりセキュリティの強化ができるようになった。&lt;/p>
+&lt;p>&lt;strong>konnectivity-agent-autoscaler&lt;/strong> は、上記の Konnectivity Agent のスケーリングを制御するものだと認識。&lt;/p>
+&lt;p>参考:&lt;br>
+&lt;a class="link" href="https://polar3130.hatenablog.com/entry/2023/05/26/173000" target="_blank" rel="noopener"
+>https://polar3130.hatenablog.com/entry/2023/05/26/173000&lt;/a>&lt;br>
+(参考というかほぼ引用させていただきました)&lt;br>
+&lt;a class="link" href="https://kubernetes.io/docs/concepts/architecture/control-plane-node-communication/#konnectivity-service" target="_blank" rel="noopener"
+>https://kubernetes.io/docs/concepts/architecture/control-plane-node-communication/#konnectivity-service&lt;/a>&lt;/p>
+&lt;h3 id="kube-dns">kube-dns&lt;/h3>
+&lt;p>✅ &lt;strong>GKE クラスタに内蔵されている DNS サーバ&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>kube-dns&lt;/strong> は、クラスタ内のコンテナが名前解決できるようDNSの設定を行うクラスタ内のDNSサーバで、Serviceとして動いている。&lt;br>
+アーキテクチャ図は以下。kube-dns Service は、kube-dns Pod をグループ化して、単一の IP アドレス（ClusterIP）を割り振る役割を持っており、デフォルトではクラスタ内のすべての Pod がこの Service を使用して DNS クエリを解決する。&lt;br>
+&lt;strong>kube-dns-autoscaler&lt;/strong> は、クラスタの DNS 処理に対応できるように kube-dns をスケーリングする役割を持っている。&lt;/p>
+&lt;p>&lt;img src="https://blaaackard.com/p/gke-kubesystem-resource/kube-dns.png"
+width="729"
+height="332"
+srcset="https://blaaackard.com/p/gke-kubesystem-resource/kube-dns_hu8c08fd8b2185451f1583140fee73e427_17040_480x0_resize_box_3.png 480w, https://blaaackard.com/p/gke-kubesystem-resource/kube-dns_hu8c08fd8b2185451f1583140fee73e427_17040_1024x0_resize_box_3.png 1024w"
+loading="lazy"
+alt="アーキテクチャ(公式docから引用)"
+class="gallery-image"
+data-flex-grow="219"
+data-flex-basis="526px"
+>&lt;/p>
+&lt;p>各 Pod の DNS 設定は &lt;strong>kubelet&lt;/strong> が行っており、kube-dns Service の IPアドレスは各コンテナ内の&lt;code>etc/resolv.conf&lt;/code>に記述されている。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">❯ k get service kube-dns
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">NAME TYPE CLUSTER-IP EXTERNAL-IP PORT&lt;span class="o">(&lt;/span>S&lt;span class="o">)&lt;/span> AGE
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">kube-dns ClusterIP 10.8.0.10 &amp;lt;none&amp;gt; 53/UDP,53/TCP 9h
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>nameserver に kube-dns の CLUSTER-IPである&lt;code>10.8.0.10&lt;/code>が書いてある。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-fallback" data-lang="fallback">&lt;span class="line">&lt;span class="cl"># cat /etc/resolv.conf
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">search k8sgpt.svc.cluster.local svc.cluster.local cluster.local asia-northeast1-a.c.{hoge}.internal c.{hoge}.internal google.internal
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">nameserver 10.8.0.10
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">options ndots:5
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>参考:&lt;br>
+&lt;a class="link" href="https://kubernetes.io/ja/docs/concepts/services-networking/dns-pod-service/" target="_blank" rel="noopener"
+>https://kubernetes.io/ja/docs/concepts/services-networking/dns-pod-service/&lt;/a>&lt;br>
+&lt;a class="link" href="https://cloud.google.com/kubernetes-engine/docs/how-to/kube-dns?hl=ja" target="_blank" rel="noopener"
+>https://cloud.google.com/kubernetes-engine/docs/how-to/kube-dns?hl=ja&lt;/a>&lt;br>
+&lt;a class="link" href="https://gadgeterkun.hatenablog.com/entry/20190630/1561864860" target="_blank" rel="noopener"
+>https://gadgeterkun.hatenablog.com/entry/20190630/1561864860&lt;/a>&lt;br>
+&lt;a class="link" href="https://amateur-engineer-blog.com/kubernetes-dns/" target="_blank" rel="noopener"
+>https://amateur-engineer-blog.com/kubernetes-dns/&lt;/a>&lt;/p>
+&lt;h3 id="l7-default-backend">l7-default-backend&lt;/h3>
+&lt;p>✅ &lt;strong>Ingress Controller のこと&lt;/strong>&lt;/p>
+&lt;p>GKE では、Ingress というオブジェクトで、アプリケーションに HTTP(S) トラフィックをルーティングすることができる。
+GKE Ingress Controller によって Cloud HTTP(S) ロードバランサが作成され、Ingress および関連する Service の情報に従って構成を行う。この Ingress Controller の Pod が &lt;strong>l7-default-backend&lt;/strong> で、GKEクラスタの HTTP ロードバランシングが「有効」になっていると起動する。&lt;br>
+この Ingress Controller が NEG(Network Endpoint Groups:&lt;code>GCE_VM_IP_PORT&lt;/code>)を作成することで、コンテナに対して直接負荷分散を行うことが可能となり、従来にくらべてコンテナに到達するまでのホップ数を減らし、レイテンシーの向上が期待できる「コンテナネイティブの負荷分散」ができるようになる。&lt;/p>
+&lt;p>&lt;img src="https://blaaackard.com/p/gke-kubesystem-resource/lb-neg.png"
+width="1438"
+height="678"
+srcset="https://blaaackard.com/p/gke-kubesystem-resource/lb-neg_huc078f036485567769935fe3250a4d861_94919_480x0_resize_box_3.png 480w, https://blaaackard.com/p/gke-kubesystem-resource/lb-neg_huc078f036485567769935fe3250a4d861_94919_1024x0_resize_box_3.png 1024w"
+loading="lazy"
+alt="公式docから引用"
+class="gallery-image"
+data-flex-grow="212"
+data-flex-basis="509px"
+>&lt;/p>
+&lt;p>どんどん話が大きくなりそうなので一旦ここまで。&lt;/p>
+&lt;p>参考:&lt;br>
+&lt;a class="link" href="https://cloud.google.com/kubernetes-engine/docs/concepts/ingress?hl=ja" target="_blank" rel="noopener"
+>https://cloud.google.com/kubernetes-engine/docs/concepts/ingress?hl=ja&lt;/a>&lt;br>
+&lt;a class="link" href="https://cloud.google.com/kubernetes-engine/docs/concepts/container-native-load-balancing?hl=ja" target="_blank" rel="noopener"
+>https://cloud.google.com/kubernetes-engine/docs/concepts/container-native-load-balancing?hl=ja&lt;/a>&lt;br>
+&lt;a class="link" href="https://qiita.com/ishii1648/items/a9804d96dea275ee28bd" target="_blank" rel="noopener"
+>https://qiita.com/ishii1648/items/a9804d96dea275ee28bd&lt;/a>&lt;/p>
+&lt;h3 id="metrics-server">metrics-server&lt;/h3>
+&lt;p>✅ &lt;strong>クラスタのリソースを取得する&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>Metrics Server&lt;/strong> は Kubelet からクラスタ内のリソース使用状況を収集し、Metrics API を通じて Kubernetes Api Server で公開する。リソース使用状況を収集することで、自動スケーリングやデバッグが容易になる。&lt;/p>
+&lt;p>Metrics API には &lt;code>kubectl top&lt;/code>でアクセス可能。&lt;br>
+&lt;code>kubectl describe&lt;/code>コマンドでは Pod が確保したリソースを確認できるのに対し、こちらのコマンドは&lt;strong>実際に Pod 内のコンテナが使用しているリソースの使用量&lt;/strong>が確認できる。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">❯ kubectl top pod -n kube-system
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">NAME CPU&lt;span class="o">(&lt;/span>cores&lt;span class="o">)&lt;/span> MEMORY&lt;span class="o">(&lt;/span>bytes&lt;span class="o">)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">event-exporter-gke-7bf6c99dcb-ddh8w 1m 20Mi
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">fluentbit-gke-sdpcc 6m 23Mi
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">...
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>参考:&lt;br>
+&lt;a class="link" href="https://github.com/kubernetes-sigs/metrics-server" target="_blank" rel="noopener"
+>https://github.com/kubernetes-sigs/metrics-server&lt;/a>&lt;br>
+&lt;a target="_blank" href="https://www.amazon.co.jp/Kubernetes%25E5%25AE%258C%25E5%2585%25A8%25E3%2582%25AC%25E3%2582%25A4%25E3%2583%2589-%25E7%25AC%25AC2%25E7%2589%2588-Top-Gear-%25E9%259D%2592%25E5%25B1%25B1/dp/4295009792?&amp;_encoding=UTF8&amp;tag=blaaackard04-22&amp;linkCode=ur2&amp;linkId=2ff724fb2dfe8348672a1ebc4673ed32&amp;camp=247&amp;creative=1211">Kubernetes完全ガイド 第2版 (Top Gear)&lt;/a>&lt;/p>
+&lt;h2 id="daemonset">Daemonset&lt;/h2>
+&lt;p>全ての Node で動くべき Pod を定義するのが Daemonset 。&lt;br>
+監視やログ収集を行うデーモン等があります。軽く触れていきます。&lt;/p>
+&lt;h3 id="fluentbit-gke">fluentbit-gke&lt;/h3>
+&lt;p>✅ &lt;strong>各 Node のコンテナログを Cloud Logging に転送する&lt;/strong>&lt;/p>
+&lt;p>GKE クラスタを作成すると、Cloud Logging および Cloud Monitoring と Cloud Operations for GKE とのインテグレーションがデフォルトで有効になる。&lt;br>
+システムログとアプリケーション ログは、Cloud Logging のログルーターに配信され、Cloud Logging に取り込まれるか、除外されるか、BigQuery、Pub/Sub、Cloud Storage 等にエクスポートされる。&lt;br>
+システム ロギングを有効にすると、fluentbit ベースの専用の Logging エージェントである &lt;strong>fluentbit-gke&lt;/strong> が 各ノードに自動的にデプロイされ、ログを Cloud Logging に送信する。&lt;/p>
+&lt;p>GKE Standard における Node あたりの Pod 数上限は 110 だったが、2022 年 8 月のアップデートで 256 まで引き上げられた。 &lt;strong>fluentbit-gke-256pd&lt;/strong> はそれに対応するものという認識。&lt;br>
+いずれかの GKE ノードで 1 秒あたり 100 KiB を超えるログ スループットが必要な場合は、高スループット版の &lt;strong>fluentbit-gke-max&lt;/strong> を使用することで、ノードごとに 1 秒あたり 10 MiB という高スループットを実現することができる。&lt;/p>
+&lt;p>参考:&lt;br>
+&lt;a class="link" href="https://cloud.google.com/stackdriver/docs/solutions/gke/managing-logs?hl=ja" target="_blank" rel="noopener"
+>https://cloud.google.com/stackdriver/docs/solutions/gke/managing-logs?hl=ja&lt;/a>&lt;br>
+&lt;a class="link" href="https://polar3130.hatenablog.com/entry/2022/08/18/180500" target="_blank" rel="noopener"
+>https://polar3130.hatenablog.com/entry/2022/08/18/180500&lt;/a>&lt;br>
+&lt;a class="link" href="https://polar3130.hatenablog.com/entry/2022/09/21/090000" target="_blank" rel="noopener"
+>https://polar3130.hatenablog.com/entry/2022/09/21/090000&lt;/a>&lt;/p>
+&lt;h3 id="gke-metrics-agent">gke-metrics-agent&lt;/h3>
+&lt;p>✅ &lt;strong>Cloud Monitoring にメトリクスを送信する&lt;/strong>&lt;/p>
+&lt;p>Cloud Monitoring にメトリクスを取り込むことで、ダッシュボードでの表示やアラートの生成を行うことができる。&lt;strong>gke-metrics-agent&lt;/strong> は各ノードのメトリクスを Cloud Monitoring に送信する役割を持つ。&lt;br>
+gke-metrics-agent-scaling-10 や gke-metrics-agent-scaling-100 があるが、数字は追加するメモリ量(MB)を表している。&lt;/p>
+&lt;p>参考:&lt;br>
+&lt;a class="link" href="https://cloud.google.com/stackdriver/docs/solutions/gke/managing-metrics?hl=ja" target="_blank" rel="noopener"
+>https://cloud.google.com/stackdriver/docs/solutions/gke/managing-metrics?hl=ja&lt;/a>&lt;/p>
+&lt;h3 id="kube-proxy">kube-proxy&lt;/h3>
+&lt;p>✅ &lt;strong>Service リソースを監視し、ノードのネットワーク設定を行う&lt;/strong>&lt;/p>
+&lt;p>&lt;strong>kube-proxy&lt;/strong> は kubelet と同じく、各Node上で動作するコンポーネント。Service リソースの作成/更新/削除を検知した際に、Node のネットワーク設定を行うことで、 ClusterIP や NodePort 宛のトラフィックが Pod に正常に転送されるようにする。&lt;br>
+3つの転送方式があるが、デフォルトは iptables を構成する iptables モード。&lt;br>
+以下参考ページがわかりやすい。&lt;/p>
+&lt;p>参考:
+&lt;a class="link" href="https://qiita.com/nozmiz/items/9a74433258a79be26c36" target="_blank" rel="noopener"
+>https://qiita.com/nozmiz/items/9a74433258a79be26c36&lt;/a>&lt;br>
+&lt;a class="link" href="https://recruit.gmo.jp/engineer/jisedai/blog/kubernetes_service/" target="_blank" rel="noopener"
+>https://recruit.gmo.jp/engineer/jisedai/blog/kubernetes_service/&lt;/a>&lt;/p>
+&lt;h3 id="metadata-proxy">metadata-proxy&lt;/h3>
+&lt;p>✅ &lt;strong>コンテナワークロードに隠蔽されたメタデータを提供する&lt;/strong>&lt;/p>
+&lt;p>GKE ではインスタンスメタデータを使用して VM を構成するが、メタデータの一部は機密性が高くクラスタで実行中のワークロードから保護する必要がある。&lt;br>
+&lt;strong>metadata-proxy&lt;/strong>はこの役割を持つものだが、現在ではメタデータ隠蔽は非推奨となっており、&lt;strong>Workload Identity&lt;/strong> を使うことが推奨されている。&lt;/p>
+&lt;p>参考:&lt;br>
+&lt;a class="link" href="https://cloud.google.com/kubernetes-engine/docs/how-to/protecting-cluster-metadata?hl=ja" target="_blank" rel="noopener"
+>https://cloud.google.com/kubernetes-engine/docs/how-to/protecting-cluster-metadata?hl=ja&lt;/a>&lt;br>
+&lt;a class="link" href="https://github.com/GoogleCloudPlatform/k8s-metadata-proxy" target="_blank" rel="noopener"
+>https://github.com/GoogleCloudPlatform/k8s-metadata-proxy&lt;/a>&lt;/p>
+&lt;h3 id="nccl-fastsocket-installer">nccl-fastsocket-installer&lt;/h3>
+&lt;p>✅ &lt;strong>NVIDIAが提供するマルチGPU向けの集合通信のパフォーマンスを向上させる&lt;/strong>&lt;/p>
+&lt;p>NCCLは、NVIDIAが提供するマルチGPU向けの集合通信用のライブラリで、TensorFlow や PyTorch などのディープラーニングフレームワークでマルチ GPU やマルチノードトレーニングを行う場合に使用される。&lt;br>
+&lt;strong>nccl-fastsocket-installer&lt;/strong> は、これらのパフォーマンスを向上させるトランスポート層のプラグインらしい。&lt;/p>
+&lt;p>参考:&lt;br>
+&lt;a class="link" href="https://github.com/google/nccl-fastsocket" target="_blank" rel="noopener"
+>https://github.com/google/nccl-fastsocket&lt;/a>
+&lt;a class="link" href="https://cloud.google.com/compute/docs/gpus/optimize-gpus?hl=ja#fast-socket" target="_blank" rel="noopener"
+>https://cloud.google.com/compute/docs/gpus/optimize-gpus?hl=ja#fast-socket&lt;/a>&lt;/p>
+&lt;h3 id="nvidia-gpu-device-plugin">nvidia-gpu-device-plugin&lt;/h3>
+&lt;p>✅ &lt;strong>NVIDIA製のGPUをクラスタで使えるようにする&lt;/strong>&lt;/p>
+&lt;p>Device Plugins とは様々なハードウェアを kubelet に見せるための仕組み。&lt;br>
+GKE上では、NVIDIA Tesla® GPU（K80、P100、P4、V100、T4、L4、A100）を装備したノードプールを作成することができ、画像認識や自然言語処理等のディープラーニングに必要な計算能力を提供する。
+&lt;strong>nvidia-gpu-device-plugin&lt;/strong> はGKE上で NVIDIA 製の GPU を実行するために必要な plugin 。&lt;/p>
+&lt;p>参考:&lt;br>
+&lt;a class="link" href="https://cloud.google.com/kubernetes-engine/docs/how-to/gpus?hl=ja" target="_blank" rel="noopener"
+>https://cloud.google.com/kubernetes-engine/docs/how-to/gpus?hl=ja&lt;/a>&lt;br>
+&lt;a class="link" href="https://speakerdeck.com/extendwings/device-pluginkai-fa-ru-men" target="_blank" rel="noopener"
+>https://speakerdeck.com/extendwings/device-pluginkai-fa-ru-men&lt;/a>&lt;br>
+&lt;a class="link" href="https://kubernetes.io/ja/docs/tasks/manage-gpus/scheduling-gpus/" target="_blank" rel="noopener"
+>https://kubernetes.io/ja/docs/tasks/manage-gpus/scheduling-gpus/&lt;/a>&lt;/p>
+&lt;h3 id="pdcsi-node">pdcsi-node&lt;/h3>
+&lt;p>✅ &lt;strong>Compute Engine 永続ディスクの CSI ドライバ&lt;/strong>&lt;/p>
+&lt;p>GKE を使用するとクラスタへ簡単かつ自動的に Compute Engine 永続ディスク Container Storage Interface（CSI）ドライバをデプロイして管理することができる。標準クラスタでは、Compute Engine 永続ディスクの CSI ドライバを有効にする必要がある。&lt;/p>
+&lt;p>詳しく調べてないが、&lt;code>csi-node-driver-registrar&lt;/code>と&lt;code>gcp-compute-persistent-disk-csi-driver&lt;/code>という Image が使われていることから、これらに関連するリソースだと思われる。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">❯ kubectl describe daemonsets pdcsi-node --namespace&lt;span class="o">=&lt;/span>kube-system
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">...
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">Pod Template:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> Labels: k8s-app&lt;span class="o">=&lt;/span>gcp-compute-persistent-disk-csi-driver
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> Annotations: components.gke.io/component-name: pdcsi
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> components.gke.io/component-version: 0.16.14
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> Service Account: pdcsi-node-sa
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> Containers:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> csi-driver-registrar:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> Image: gke.gcr.io/csi-node-driver-registrar:v2.8.0-gke.4@sha256:715a1581ce158fbf95f7ca351e25c7d6a0a1599e46e270e72238cc8a0aef1c43
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> gce-pd-driver:
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl"> Image: gke.gcr.io/gcp-compute-persistent-disk-csi-driver:v1.10.7-gke.0@sha256:a3e4af6b6f6999427dc7b02e813aa1ca5f26e73357c92a77b8fe774ddf431a26
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>詳しくは以下の参考ページ。&lt;/p>
+&lt;p>参考:&lt;br>
+&lt;a class="link" href="https://cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/gce-pd-csi-driver?hl=ja" target="_blank" rel="noopener"
+>https://cloud.google.com/kubernetes-engine/docs/how-to/persistent-volumes/gce-pd-csi-driver?hl=ja&lt;/a>&lt;br>
+&lt;a class="link" href="https://github.com/kubernetes-sigs/gcp-compute-persistent-disk-csi-driver" target="_blank" rel="noopener"
+>https://github.com/kubernetes-sigs/gcp-compute-persistent-disk-csi-driver&lt;/a>&lt;/p>
+&lt;h3 id="runsc-metric-server">runsc-metric-server&lt;/h3>
+&lt;p>あまり良くわかってないが、以下の参考サイトと関連ありそう。&lt;/p>
+&lt;p>参考:&lt;br>
+&lt;a class="link" href="https://gvisor.dev/docs/user_guide/observability/" target="_blank" rel="noopener"
+>https://gvisor.dev/docs/user_guide/observability/&lt;/a>&lt;/p>
+&lt;h3 id="tpu-device-plugin">tpu-device-plugin&lt;/h3>
+&lt;p>調べてもあまり情報が出てこなかったが、nvidia-gpu-device-plugin と同様に GKE上で TPU を実行したい場合に必要な plugin だと認識。&lt;/p>
+&lt;h1 id="まとめ">まとめ&lt;/h1>
+&lt;p>今回は Namespace 「kube-system」 にあるリソースがどのような役割を持っているのかメモベースでまとめてみました。なんとなくの理解がハッキリした理解に変わったり、新しく得た知識もありました。&lt;br>
+まだまだ分からないことだらけですが一つずつ潰していきたいです。&lt;br>
+ありがとうございました。&lt;/p></description></item><item><title>K8sGPTを使ってクラスタのAI分析をしてみよう</title><link>https://blaaackard.com/p/k8s-gpt/</link><pubDate>Sat, 07 Oct 2023 00:17:43 +0900</pubDate><guid>https://blaaackard.com/p/k8s-gpt/</guid><description>&lt;img src="https://blaaackard.com/p/k8s-gpt/cover.png" alt="Featured image of post K8sGPTを使ってクラスタのAI分析をしてみよう" />&lt;h1 id="最初に">最初に&lt;/h1>
+&lt;p>&lt;strong>皆さん、&amp;ldquo;K8sGPT&amp;rdquo; 知っていますか？使ったことありますか？&lt;/strong>&lt;br>
+GitHub: &lt;a class="link" href="https://github.com/k8sgpt-ai/k8sgpt/tree/main" target="_blank" rel="noopener"
+>https://github.com/k8sgpt-ai/k8sgpt/tree/main&lt;/a>&lt;/p>
+&lt;p>Cloud Native Days FUKUOKA 2023に参加した際に、K8sGPTのセッションを聴講して興味を持ったので実際に触ってみました。&lt;br>
+セッション情報: &lt;a class="link" href="https://event.cloudnativedays.jp/cndf2023/talks/1885" target="_blank" rel="noopener"
+>https://event.cloudnativedays.jp/cndf2023/talks/1885&lt;/a>&lt;/p>
+&lt;p>K8sGPT は Kubernetes クラスタ内の問題を探索し、評価、解説するためのツールです。&lt;br>
+システム信頼性エンジニアリング(SRE)の専門知識が組み込まれているため、テクニカルな知識に自信がない人でも容易に使うことができます。&lt;br>
+実行自体は本当にシンプルで&lt;code>k8sgpt analyze&lt;/code>というコマンドを叩くだけで実行できます。&lt;/p>
+&lt;p>&lt;strong>実際にクラスタに問題を発生させて検知してもらいましょう！&lt;/strong>&lt;/p>
+&lt;h2 id="クラスタと問題マニフェストの作成">クラスタと問題マニフェストの作成&lt;/h2>
+&lt;p>Kubernetesクラスタの作成が必要な方は作成しましょう。&lt;br>
+また、K8sGPTに問題を検知させるためのマニフェストを準備します。&lt;br>
+今回はノードの割当可能CPUを超過させるようなものをChatGPTに作ってもらいました🤖&lt;/p>
+&lt;details>
+&lt;summary>sample.yaml&lt;/summary>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;span class="lnt">22
+&lt;/span>&lt;span class="lnt">23
+&lt;/span>&lt;span class="lnt">24
+&lt;/span>&lt;span class="lnt">25
+&lt;/span>&lt;span class="lnt">26
+&lt;/span>&lt;span class="lnt">27
+&lt;/span>&lt;span class="lnt">28
+&lt;/span>&lt;span class="lnt">29
+&lt;/span>&lt;span class="lnt">30
+&lt;/span>&lt;span class="lnt">31
+&lt;/span>&lt;span class="lnt">32
+&lt;/span>&lt;span class="lnt">33
+&lt;/span>&lt;span class="lnt">34
+&lt;/span>&lt;span class="lnt">35
+&lt;/span>&lt;span class="lnt">36
+&lt;/span>&lt;span class="lnt">37
+&lt;/span>&lt;span class="lnt">38
+&lt;/span>&lt;span class="lnt">39
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="line">&lt;span class="cl">&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">apps/v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Deployment&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">faulty-deployment&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">namespace&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">k8sgpt&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">replicas&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">3&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">selector&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">matchLabels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">faulty-app&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">template&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">labels&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">faulty-app&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">containers&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">faulty-container&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">nginx:latest&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">resources&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">limits&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">memory&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s2">&amp;#34;128Mi&amp;#34;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">cpu&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s2">&amp;#34;500m&amp;#34;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">ports&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="nt">containerPort&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">8080&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="nn">---&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="nt">apiVersion&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">v1&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="nt">kind&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">Service&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="nt">metadata&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">faulty-service&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">namespace&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">k8sgpt&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w">&lt;/span>&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">selector&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">app&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">faulty-app&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">ports&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="nt">protocol&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">TCP&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">port&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">80&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">targetPort&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="m">8080&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;/details>
+&lt;h2 id="cliのインストール">CLIのインストール&lt;/h2>
+&lt;p>早速READMEに記載の通りbrewで入れていきます。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">❯ brew tap k8sgpt-ai/k8sgpt
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">❯ brew install k8sgpt
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h2 id="apiキーの発行">APIキーの発行&lt;/h2>
+&lt;p>インストールが完了したらAPIキーを発行する必要があります。&lt;br>
+&lt;code>k8sgpt generate&lt;/code>を打つとOpenAIのページに遷移しました。&lt;/p>
+&lt;p>🚨&lt;strong>OpenAIのアカウント作成が必要です。&lt;/strong>&lt;br>
+🚨&lt;strong>後続の分析ではCreditが必要になります(Min5$から購入できます)。&lt;/strong>&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">❯ k8sgpt generate
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Opening: https://beta.openai.com/account/api-keys to generate a key for openai&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Please copy the generated key and run `k8sgpt auth` to add it to your config file&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>&lt;img src="https://blaaackard.com/p/k8s-gpt/API-key-1.png"
+width="2852"
+height="1374"
+srcset="https://blaaackard.com/p/k8s-gpt/API-key-1_huef6826745648d9dc18648c35edd8417f_320845_480x0_resize_box_3.png 480w, https://blaaackard.com/p/k8s-gpt/API-key-1_huef6826745648d9dc18648c35edd8417f_320845_1024x0_resize_box_3.png 1024w"
+loading="lazy"
+alt="api-key発行画面"
+class="gallery-image"
+data-flex-grow="207"
+data-flex-basis="498px"
+>&lt;/p>
+&lt;p>&lt;code>+ Create new secret key&lt;/code>を押すとキーの名前を入力するポップアップが出てくるので、適当な名前を入力して&lt;code>Create secret key&lt;/code>を押します。&lt;br>
+キーが発行されるのでコピーしておきましょう。&lt;/p>
+&lt;h2 id="providerの設定">Providerの設定&lt;/h2>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">❯ k8sgpt auth add -b openai -m gpt-3.5-turbo -p &lt;span class="o">{&lt;/span>COPYしたAPIキー&lt;span class="o">}&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># openai added to the AI backend provider list&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>ここでいう -bは「backend AI provider」-mは「backend AI model」を意味しています。&lt;br>
+README通りの&lt;code>k8sgpt auth add&lt;/code>だけだと&lt;code>k8sgpt analyze&lt;/code>コマンドを使って分析自体はできるのですが、explainやFilterを使おうとすると怒られたので明示的に指定しました。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;span class="lnt">8
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">❯ k8sgpt auth add
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Warning: backend input is empty, will use the default value: openai&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Warning: model input is empty, will use the default value: gpt-3.5-turbo&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">Enter openai Key: &lt;span class="c1"># openai added to the AI backend provider list&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">❯ k8sgpt analyze --explain --namespace&lt;span class="o">=&lt;/span>k8sgpt
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 0% | (0/12, 0 it/hr) [0s:0s]&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Error: failed while calling AI provider openai: error, status code: 400, message: you must provide a model parameter&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>ちなみに今回はOpenAIを指定しましたが、オラクルが支援するCohere等も使えそうでした。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">❯ k8sgpt auth list
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Default:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># &amp;gt; openai&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Active:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># &amp;gt; openai&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Unused:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># &amp;gt; localai&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># &amp;gt; azureopenai&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># &amp;gt; noopai&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># &amp;gt; cohere&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h2 id="いざ分析">いざ分析！&lt;/h2>
+&lt;p>分析自体は&lt;code>k8sgpt analyze&lt;/code>をたたくだけです。&lt;br>
+&amp;ndash;namespace={NAME} や &amp;ndash;filter=Pod など絞り込みもできます。&lt;br>
+Serviceはラベルを貼ろうと言われており、DeploymentはCPUリソースが不足していると言われています。&lt;br>
+ちゃんとCPUに関する分析結果が出力されて安心しました✌&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">❯ k8sgpt analyze --namespace&lt;span class="o">=&lt;/span>k8sgpt
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># AI Provider: openai&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 0 k8sgpt/faulty-service(faulty-service)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># - Error: Service has no endpoints, expected label app=faulty-app&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 1 k8sgpt/faulty-deployment-6879cc8f7f-cntv2(Deployment/faulty-deployment)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># - Error: 0/2 nodes are available: 2 Insufficient cpu. preemption: 0/2 nodes are available: 2 No preemption victims found for incoming pod..&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>&amp;ndash;explain をつけることにより、問題のより詳細な説明を得ることができます。&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;span class="lnt">20
+&lt;/span>&lt;span class="lnt">21
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">❯ k8sgpt analyze --explain --namespace&lt;span class="o">=&lt;/span>k8sgpt
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 100% |████████████████████████████████| (4/4, 12 it/min)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># AI Provider: openai&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 0 k8sgpt/faulty-service(faulty-service)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># - Error: Service has no endpoints, expected label app=faulty-app&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Error: The service has no endpoints and it is expecting the label app=faulty-app.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Solution:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 1. Check the labels of the faulty-app deployment.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 2. Make sure the labels match the selector in the service definition.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 3. Update the labels if necessary.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 4. Restart the deployment and service to apply the changes.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 1 k8sgpt/faulty-deployment-6879cc8f7f-cntv2(Deployment/faulty-deployment)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># - Error: 0/2 nodes are available: 2 Insufficient cpu. preemption: 0/2 nodes are available: 2 No preemption victims found for incoming pod..&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Error: 0/2 nodes are available: 2 Insufficient cpu. preemption: 0/2 nodes are available: 2 No preemption victims found for incoming pod..&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Solution:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 1. Check the resource requirements of the pod.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 2. Increase the CPU limits or request values in the pod&amp;#39;s configuration.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 3. Ensure that the cluster has enough available CPU resources.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 4. If necessary, add more nodes to the cluster.&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 5. Retry deploying the pod.&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>-l Japanese をつけることで日本語化もできちゃいます。&lt;br>
+「犠牲者が見つかりませんでした。」&amp;hellip;機械的な翻訳になってますが意味は理解できますね🙆‍♂️&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt"> 1
+&lt;/span>&lt;span class="lnt"> 2
+&lt;/span>&lt;span class="lnt"> 3
+&lt;/span>&lt;span class="lnt"> 4
+&lt;/span>&lt;span class="lnt"> 5
+&lt;/span>&lt;span class="lnt"> 6
+&lt;/span>&lt;span class="lnt"> 7
+&lt;/span>&lt;span class="lnt"> 8
+&lt;/span>&lt;span class="lnt"> 9
+&lt;/span>&lt;span class="lnt">10
+&lt;/span>&lt;span class="lnt">11
+&lt;/span>&lt;span class="lnt">12
+&lt;/span>&lt;span class="lnt">13
+&lt;/span>&lt;span class="lnt">14
+&lt;/span>&lt;span class="lnt">15
+&lt;/span>&lt;span class="lnt">16
+&lt;/span>&lt;span class="lnt">17
+&lt;/span>&lt;span class="lnt">18
+&lt;/span>&lt;span class="lnt">19
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">❯ k8sgpt analyze --explain -l Japanese --namespace&lt;span class="o">=&lt;/span>k8sgpt
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 100% |████████████████████████████████| (4/4, 9 it/min)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># AI Provider: openai&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 0 k8sgpt/faulty-service(faulty-service)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># - Error: Service has no endpoints, expected label app=faulty-app&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Error: サービスにエンドポイントがありません。ラベルapp=faulty-appが期待されています。&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Solution:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 1. kubectl get svcを使用して現在のサービスを確認します。&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 2. kubectl label svc &amp;lt;service-name&amp;gt; app=faulty-appを使用してサービスにラベルを追加します。&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 3. kubectl get endpointsを使用してエンドポイントが正しく追加されたことを確認します。&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 1 k8sgpt/faulty-deployment-6879cc8f7f-cntv2(Deployment/faulty-deployment)&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># - Error: 0/2 nodes are available: 2 Insufficient cpu. preemption: 0/2 nodes are available: 2 No preemption victims found for incoming pod..&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Error: 0/2 ノードが利用可能です: 2 CPU が不足しています。プリエンプション: 0/2 ノードが利用可能です: 2 入力ポッドのプリエンプションの犠牲者が見つかりませんでした。&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># Solution:&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 1. クラスタ内のノードの CPU リソースを確認します。&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 2. ノードが十分な CPU を持っていることを確認します。&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 3. もしくは、ポッドの CPU リクエストまたは制限を調整します。&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># 4. もしくは、他のノードにポッドをスケジュールします。&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h2 id="問題を修正して再デプロイ">問題を修正して再デプロイ&lt;/h2>
+&lt;p>K8sGPTの分析結果を参考に以下の修正を行います。&lt;/p>
+&lt;ul>
+&lt;li>faulty-serviceにラベルを貼る&lt;br>
+(Solutionでコマンド例を出力してくれてるのでそれ通りに実行します。)&lt;/li>
+&lt;/ul>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">❯ kubectl label svc faulty-service &lt;span class="nv">app&lt;/span>&lt;span class="o">=&lt;/span>faulty-app -n k8sgpt
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1"># service/faulty-service labeled&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;ul>
+&lt;li>faulty-deploymentのCPUリソースリミット値をNodeの割当可能な大きさまで下げる&lt;/li>
+&lt;/ul>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;span class="lnt">5
+&lt;/span>&lt;span class="lnt">6
+&lt;/span>&lt;span class="lnt">7
+&lt;/span>&lt;span class="lnt">8
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-yaml" data-lang="yaml">&lt;span class="line">&lt;span class="cl">&lt;span class="nt">spec&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">containers&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>- &lt;span class="nt">name&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">faulty-container&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">image&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="l">nginx:latest&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">resources&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">limits&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">memory&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s2">&amp;#34;128Mi&amp;#34;&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="w"> &lt;/span>&lt;span class="nt">cpu&lt;/span>&lt;span class="p">:&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="s2">&amp;#34;500m&amp;#34;&lt;/span>&lt;span class="w"> &lt;/span>&lt;span class="c"># &amp;gt;&amp;gt;&amp;#34;50m&amp;#34;に変更&lt;/span>&lt;span class="w">
+&lt;/span>&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;p>再度分析をすると、、、問題がなくなりました🎉&lt;/p>
+&lt;div class="highlight">&lt;div class="chroma">
+&lt;table class="lntable">&lt;tr>&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code>&lt;span class="lnt">1
+&lt;/span>&lt;span class="lnt">2
+&lt;/span>&lt;span class="lnt">3
+&lt;/span>&lt;span class="lnt">4
+&lt;/span>&lt;/code>&lt;/pre>&lt;/td>
+&lt;td class="lntd">
+&lt;pre tabindex="0" class="chroma">&lt;code class="language-bash" data-lang="bash">&lt;span class="line">&lt;span class="cl">❯ k8sgpt analyze --explain -n k8sgpt
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">#AI Provider: openai&lt;/span>
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">
+&lt;/span>&lt;/span>&lt;span class="line">&lt;span class="cl">&lt;span class="c1">#No problems detected&lt;/span>
+&lt;/span>&lt;/span>&lt;/code>&lt;/pre>&lt;/td>&lt;/tr>&lt;/table>
+&lt;/div>
+&lt;/div>&lt;h1 id="まとめ">まとめ&lt;/h1>
+&lt;p>今回はKubernetesクラスタに問題を発生させ、実際にK8sGPTを使用して問題を分析し、修正までをやってみました。&lt;br>
+簡単にクラスタの分析ができることがお分かりいただけたのではないかと思います！&lt;br>
+今回は小規模クラスタ かつ Namespace でフィルターをかけて意図的に分析結果を出してもらいましたが、大規模クラスタの全体検索とかしてみると不適切な設定値のまま放置されているリソースの発見等ができそうですね！&lt;br>
+K8sGPTはまだそこまで一般的になっていませんが、積極的な開発が進んでいます。今後のKubernetes×AIの話題には注目ですね👀&lt;/p>
+&lt;p>最後まで読んでくださりありがとうございました。&lt;/p></description></item></channel></rss>
